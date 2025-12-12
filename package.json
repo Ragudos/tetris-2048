@@ -1,0 +1,22 @@
+{
+  "name": "tetris-2048",
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.25.0",
+  "scripts": {
+    "test": "vitest",
+    "build": "node esbuild.config.mjs",
+    "dev": "node esbuild.config.mjs watch",
+    "format": "biome format --write"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.8",
+    "esbuild": "^0.27.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15"
+  },
+  "dependencies": {
+    "@pixi/settings": "^7.4.3",
+    "pixi.js": "^8.14.3",
+    "zod": "^4.1.13"
+  }
+}
