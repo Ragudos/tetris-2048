@@ -16,3 +16,7 @@ export function getErrorMsg(err: unknown): string {
 
   return "Something went wrong: " + err;
 }
+
+export function getTimeEaseOut(t: number) {
+  return t * t * (3 - 2 * t);
+}

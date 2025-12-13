@@ -65,4 +65,11 @@ export default class Grid<T> {
   getTotalCells(): number {
     return this.rows * this.columns;
   }
+
+  occupyGrid(value: T, x: number, y: number): void {
+    // TODO: An occupant metadata
+    this.value[this.get1DIndexFromCoords(x, y)] = value;
+  }
+
+  clearRows(): void {}
 }

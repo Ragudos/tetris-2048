@@ -10,6 +10,8 @@ import Initializeable from "./common/Initializeable";
 import TetrominoBag from "./tetromino/TetrominoBag";
 import Tetromino from "./tetromino/Tetromino";
 import GhostTetromino from "./tetromino/GhostTetromino";
+import TetrominoHandler from "./tetromino/TetrominoHandler";
+import { C } from "node_modules/vitest/dist/chunks/reporters.d.OXEK7y4s";
 
 /**
  * A Tetris Game.
@@ -26,6 +28,7 @@ export default class Game implements Initializeable {
   private tetrominoBag: TetrominoBag;
   private initialized: boolean;
   private tetrominoGhost: GhostTetromino;
+  private tetrominoHandler: TetrominoHandler;
 
   constructor() {
     const screenConfig = Config.getInstance().getScreenConfig();
@@ -39,17 +42,33 @@ export default class Game implements Initializeable {
     this.tetrominoBag = new TetrominoBag();
     this.initialized = false;
     this.tetrominoGhost = new GhostTetromino();
+    this.tetrominoHandler = new TetrominoHandler(this.grid, this.tetrominoBag);
   }
 
   private update(ticker: Ticker): void {
-    const currentTetromino = this.tetrominoBag.getCurrentTetronimo();
+    const updateState = this.tetrominoHandler.update(ticker);
+
+    if (updateState.getDidGoNext()) {
+      this.mainRenderer.resetFlicker(this.tetrominoBag.getPreviousTetromino()!);
+      this.tetrominoGhost.update(
+        this.grid,
+        this.tetrominoBag.getCurrentTetronimo()
+      );
+    }
 
     this.mainRenderer.updateGrid();
     this.mainRenderer.updateGhost(
       this.tetrominoGhost.getPositionY(),
-      currentTetromino
+      this.tetrominoBag.getCurrentTetronimo()
     );
-    this.mainRenderer.updateTetromino(currentTetromino);
+    this.mainRenderer.updateTetromino(this.tetrominoBag.getCurrentTetronimo());
+
+    if (updateState.getLocked()) {
+      this.mainRenderer.flickerBlock(
+        ticker,
+        this.tetrominoBag.getCurrentTetronimo()
+      );
+    }
   }
 
   async initialize(): Promise<void> {

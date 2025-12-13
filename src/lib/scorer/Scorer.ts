@@ -52,6 +52,14 @@ export default class Scorer implements Initializeable {
 
     this.logger.groupEnd();
   }
+
+  getSavedScore(): ScoreData | undefined {
+    return this.savedScore;
+  }
+
+  getScoreData(): ScoreData {
+    return this.score;
+  }
 }
 
 export class ScoreData implements Cloneable<ScoreData> {
@@ -91,5 +99,13 @@ export class ScoreData implements Cloneable<ScoreData> {
 
   clone(): ScoreData {
     return new ScoreData(this.level, this.score);
+  }
+
+  getLevel(): number {
+    return this.level;
+  }
+
+  getScore(): number {
+    return this.score;
   }
 }

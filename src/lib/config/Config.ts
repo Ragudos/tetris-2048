@@ -1,5 +1,6 @@
 import Cloneable from "@/common/Cloneable";
 import { KickDataKey, SpriteType } from "@/constants";
+import { en } from "zod/locales";
 
 export default class Config implements Cloneable<Config> {
   private static instance: Config;
@@ -19,7 +20,14 @@ export default class Config implements Cloneable<Config> {
   private constructor() {
     this.screenConfig = new ScreenConfig(20, 10, 250, 500, 25);
     this.controlsConfig = new ControlsConfig(2, 10);
-    this.gameplayConfig = new GameplayConfig(20, 60, "blocky", "SRS", true);
+    this.gameplayConfig = new GameplayConfig(
+      20,
+      60,
+      "blocky",
+      "SRS",
+      true,
+      true
+    );
   }
 
   clone(): Config {
@@ -49,19 +57,22 @@ export class GameplayConfig implements Cloneable<GameplayConfig> {
   private spriteType: SpriteType;
   private kickDataKey: KickDataKey;
   private enableGhost: boolean;
+  private enableLock: boolean;
 
   constructor(
     lockDelayMaxResets: number,
     lockDelayDt: number,
     spriteType: SpriteType,
     kickDataKey: KickDataKey,
-    enableGhost: boolean
+    enableGhost: boolean,
+    enableLock: boolean
   ) {
     this.lockDelayMaxResets = lockDelayMaxResets;
     this.lockDelayDt = lockDelayDt;
     this.spriteType = spriteType;
     this.kickDataKey = kickDataKey;
     this.enableGhost = enableGhost;
+    this.enableLock = enableLock;
   }
 
   clone(): GameplayConfig {
@@ -70,7 +81,8 @@ export class GameplayConfig implements Cloneable<GameplayConfig> {
       this.lockDelayDt,
       this.spriteType,
       this.kickDataKey,
-      this.enableGhost
+      this.enableGhost,
+      this.enableLock
     );
   }
 
@@ -92,6 +104,10 @@ export class GameplayConfig implements Cloneable<GameplayConfig> {
 
   getEnableGhost(): boolean {
     return this.enableGhost;
+  }
+
+  getEnableLock(): boolean {
+    return this.enableLock;
   }
 }
 

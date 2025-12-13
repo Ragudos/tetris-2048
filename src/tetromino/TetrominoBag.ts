@@ -7,6 +7,7 @@ export default class TetrominoBag implements Initializeable {
   private tetrominoes: Tetromino[];
   private counter: number = 0;
 
+  private previousTetromino: Tetromino | undefined;
   private currentTetromino: Tetromino | undefined;
   private nextTetromino: Tetromino | undefined;
 
@@ -43,6 +44,7 @@ export default class TetrominoBag implements Initializeable {
   }
 
   makeNextTetrominoCurrent(): void {
+    this.previousTetromino = this.currentTetromino;
     this.currentTetromino = this.getNextTetromino();
     this.nextTetromino = this.getTetromino();
   }
@@ -61,6 +63,10 @@ export default class TetrominoBag implements Initializeable {
     }
 
     return this.nextTetromino;
+  }
+
+  getPreviousTetromino(): Tetromino | undefined {
+    return this.previousTetromino;
   }
 
   private getTetromino(): Tetromino {

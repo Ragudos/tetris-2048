@@ -1,12 +1,11 @@
 import Grid from "@/Grid";
 import { Libraries } from "@/Libraries";
-import { Application, Container, Renderer, Sprite } from "pixi.js";
+import { Application, Container, Renderer, Sprite, Ticker } from "pixi.js";
 import Config from "@config/Config";
-import Game from "@/Game";
 import Logger from "../log/Logger";
 import { TetrominoNames } from "@/constants";
 import Initializeable from "@/common/Initializeable";
-import { getErrorMsg } from "../util/general";
+import { getErrorMsg, getTimeEaseOut } from "../util/general";
 import Tetromino from "@/tetromino/Tetromino";
 import { debounce } from "../util/debounce";
 
@@ -19,6 +18,7 @@ export default class MainRenderer implements Initializeable {
     Sprite,
     TetrominoNames | "ghost" | "background"
   >;
+  private timeSinceLastFlicker: number;
   private initialized: boolean;
 
   constructor(app: Application<Renderer>, grid: Grid<Tetromino>) {
@@ -27,6 +27,7 @@ export default class MainRenderer implements Initializeable {
     this.grid = grid;
     this.app = app;
     this.spriteToNameWeakMap = new WeakMap();
+    this.timeSinceLastFlicker = 0;
     this.initialized = false;
   }
 
@@ -197,6 +198,50 @@ export default class MainRenderer implements Initializeable {
       for (let x = 0; x < row.length; ++x) {
         if (row[x]) {
           this.updateByCoords(ghostY + y, posX + x, "ghost");
+        }
+      }
+    }
+  }
+
+  resetFlicker(tetromino: Tetromino): void {
+    this.timeSinceLastFlicker = 0;
+
+    this.changeAlpha(tetromino, 1);
+  }
+
+  flickerBlock(ticker: Ticker, tetromino: Tetromino) {
+    this.timeSinceLastFlicker += ticker.deltaTime;
+
+    // Since we want this to fade out, we subtract the fraction to one
+    // If we don't, the initial value will be 0, and it will fade in
+    // The fraction was acquired from
+    /** @see https://javascript.info/js-animation */
+    const fraction =
+      1 -
+      (ticker.deltaTime - this.timeSinceLastFlicker) /
+        (Config.getInstance().getGameplayConfig().getLockDelayDt() * 2);
+    const newAlpha = getTimeEaseOut(fraction);
+
+    this.changeAlpha(tetromino, newAlpha);
+  }
+
+  private changeAlpha(tetromino: Tetromino, alpha: number): void {
+    const position = tetromino.getTetrominoBody().getPosition();
+    const shape = tetromino.getTetrominoBody().getShape();
+
+    for (let y = 0; y < shape.length; ++y) {
+      const row = shape[y];
+
+      for (let x = 0; x < row.length; ++x) {
+        if (row[x]) {
+          const sprite = this.pixiContainer.getChildAt(
+            this.grid.get1DIndexFromCoords(
+              position.getX() + x,
+              position.getY() + y
+            )
+          );
+
+          sprite.alpha = alpha;
         }
       }
     }
