@@ -20,4 +20,12 @@ export default class Point implements Cloneable<Point> {
   getY(): number {
     return this.y;
   }
+
+  setX(x: number): void {
+    this.x = x;
+  }
+
+  setY(y: number): void {
+    this.y = y;
+  }
 }

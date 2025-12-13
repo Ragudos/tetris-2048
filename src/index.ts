@@ -32,4 +32,6 @@ async function init(): Promise<void> {
   gameContainer.appendChild(game.getTetrisContainer().getElement());
   await Scorer.getInstance().initialize();
   await game.initialize();
+
+  game.start();
 }

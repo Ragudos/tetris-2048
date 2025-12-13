@@ -1,10 +1,10 @@
 import Point from "./common/Point";
 import Tetromino from "./tetromino/Tetromino";
 
-export default class Grid {
+export default class Grid<T> {
   private rows: number;
   private columns: number;
-  private value: (Tetromino | null)[];
+  private value: (T | null)[];
 
   constructor(rows: number, columns: number) {
     this.rows = rows;

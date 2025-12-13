@@ -12,7 +12,7 @@ import Tetromino from "@/tetromino/Tetromino";
 export default class MainRenderer implements Initializeable {
   private logger: Logger;
   private pixiContainer: Container;
-  private grid: Grid;
+  private grid: Grid<Tetromino>;
   private game: Game;
   private spriteToNameWeakMap: WeakMap<
     Sprite,
@@ -20,7 +20,7 @@ export default class MainRenderer implements Initializeable {
   >;
   private initialized: boolean;
 
-  constructor(game: Game, grid: Grid) {
+  constructor(game: Game, grid: Grid<Tetromino>) {
     this.logger = Logger.createLogger("MainRenderer");
     this.pixiContainer = new (Libraries.getPIXI().Container)();
     this.grid = grid;
@@ -150,6 +150,8 @@ export default class MainRenderer implements Initializeable {
   }
 
   updateGrid(): void {
+    this.logger.info("Updating grid");
+
     for (let i = 0; i < this.grid.getTotalCells(); ++i) {
       const block = this.grid.getValue()[i];
 
@@ -158,8 +160,10 @@ export default class MainRenderer implements Initializeable {
   }
 
   updateTetromino(tetromino: Tetromino): void {
-    const shape = tetromino.getShape();
-    const position = tetromino.getPosition();
+    this.logger.info("Updating tetromino");
+
+    const shape = tetromino.getTetrominoBody().getShape();
+    const position = tetromino.getTetrominoBody().getPosition();
     const posX = position.getX();
     const posY = position.getY();
     const name = tetromino.getName();
@@ -168,7 +172,9 @@ export default class MainRenderer implements Initializeable {
       const row = shape[y];
 
       for (let x = 0; x < row.length; ++x) {
-        this.updateByCoords(posY + y, posX + x, name);
+        if (row[x]) {
+          this.updateByCoords(posY + y, posX + x, name);
+        }
       }
     }
   }
@@ -178,16 +184,24 @@ export default class MainRenderer implements Initializeable {
       return;
     }
 
-    const shape = tetromino.getShape();
-    const position = tetromino.getPosition();
+    this.logger.info("Updating ghost tetromino");
+
+    const shape = tetromino.getTetrominoBody().getShape();
+    const position = tetromino.getTetrominoBody().getPosition();
     const posX = position.getX();
 
     for (let y = 0; y < shape.length; ++y) {
       const row = shape[y];
 
       for (let x = 0; x < row.length; ++x) {
-        this.updateByCoords(ghostY + y, posX + x, "ghost");
+        if (row[x]) {
+          this.updateByCoords(ghostY + y, posX + x, "ghost");
+        }
       }
     }
+  }
+
+  getPixiContainer(): typeof this.pixiContainer {
+    return this.pixiContainer;
   }
 }

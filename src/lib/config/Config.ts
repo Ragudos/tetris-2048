@@ -124,21 +124,21 @@ export class ControlsConfig implements Cloneable<ControlsConfig> {
 }
 
 export class ScreenConfig implements Cloneable<ScreenConfig> {
-  private columns: number;
   private rows: number;
+  private columns: number;
   private width: number;
   private height: number;
   private blockSize: number;
 
   constructor(
-    columns: number,
     rows: number,
+    columns: number,
     width: number,
     height: number,
     blockSize: number
   ) {
-    this.columns = columns;
     this.rows = rows;
+    this.columns = columns;
     this.width = width;
     this.height = height;
     this.blockSize = blockSize;
@@ -146,8 +146,8 @@ export class ScreenConfig implements Cloneable<ScreenConfig> {
 
   clone(): ScreenConfig {
     return new ScreenConfig(
-      this.columns,
       this.rows,
+      this.columns,
       this.width,
       this.height,
       this.blockSize
