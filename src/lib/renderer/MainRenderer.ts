@@ -1,6 +1,6 @@
 import Grid from "@/Grid";
 import { Libraries } from "@/Libraries";
-import { Container, Sprite } from "pixi.js";
+import { Application, Container, Renderer, Sprite } from "pixi.js";
 import Config from "@config/Config";
 import Game from "@/Game";
 import Logger from "../log/Logger";
@@ -8,23 +8,24 @@ import { TetrominoNames } from "@/constants";
 import Initializeable from "@/common/Initializeable";
 import { getErrorMsg } from "../util/general";
 import Tetromino from "@/tetromino/Tetromino";
+import { debounce } from "../util/debounce";
 
 export default class MainRenderer implements Initializeable {
   private logger: Logger;
   private pixiContainer: Container;
   private grid: Grid<Tetromino>;
-  private game: Game;
+  private app: Application<Renderer>;
   private spriteToNameWeakMap: WeakMap<
     Sprite,
     TetrominoNames | "ghost" | "background"
   >;
   private initialized: boolean;
 
-  constructor(game: Game, grid: Grid<Tetromino>) {
+  constructor(app: Application<Renderer>, grid: Grid<Tetromino>) {
     this.logger = Logger.createLogger("MainRenderer");
     this.pixiContainer = new (Libraries.getPIXI().Container)();
     this.grid = grid;
-    this.game = game;
+    this.app = app;
     this.spriteToNameWeakMap = new WeakMap();
     this.initialized = false;
   }
@@ -40,30 +41,16 @@ export default class MainRenderer implements Initializeable {
       "Initialize MainRenderer",
       "Initializing the main renderer"
     );
-    this.logger.info("Getting config");
-
-    const screenConfig = Config.getInstance().getScreenConfig();
-    const gameScreen = this.game.getApp().screen;
-    const screenW = screenConfig.getWidth();
-    const screenH = screenConfig.getHeight();
-    const blockSize = screenConfig.getBlockSize();
-    const scale = Math.min(
-      gameScreen.width / screenW,
-      gameScreen.height / screenH,
-      1
-    );
-
-    this.logger.info("Setting scale");
-    this.pixiContainer.scale.set(scale);
-    this.logger.info("Setting position");
-    this.pixiContainer.position.set(
-      gameScreen.width / 2 - (screenW * scale) / 2,
-      gameScreen.height / 2 - (screenH * scale) / 2
-    );
+    this.setSize(this.app.screen.width, this.app.screen.height);
     this.logger.groupCollapsed(
       "Initialize Cells",
       "Setting grid cells' sprites"
     );
+
+    this.logger.info("Getting config");
+
+    const screenConfig = Config.getInstance().getScreenConfig();
+    const blockSize = screenConfig.getBlockSize();
 
     for (let i = 0; i < this.grid.getTotalCells(); ++i) {
       this.logger.info("Converting index to 2D coordinates");
@@ -83,6 +70,7 @@ export default class MainRenderer implements Initializeable {
     }
 
     this.logger.groupEnd();
+    this.app.renderer.on("resize", debounce(this.setSize.bind(this), 1000));
 
     this.initialized = true;
 
@@ -94,6 +82,25 @@ export default class MainRenderer implements Initializeable {
     this.pixiContainer.destroy();
 
     this.initialized = false;
+  }
+
+  private setSize(sw: number, sh: number): void {
+    this.logger.groupCollapsed("Resize", "Resizing Main Renderer");
+    this.logger.info("Getting config");
+
+    const screenConfig = Config.getInstance().getScreenConfig();
+    const screenW = screenConfig.getWidth();
+    const screenH = screenConfig.getHeight();
+    const scale = Math.min(sw / screenW, sh / screenH, 1);
+
+    this.logger.info("Setting scale");
+    this.pixiContainer.scale.set(scale);
+    this.logger.info("Setting position");
+    this.pixiContainer.position.set(
+      sw / 2 - (screenW * scale) / 2,
+      sh / 2 - (screenH * scale) / 2
+    );
+    this.logger.groupEnd();
   }
 
   /**
@@ -150,8 +157,6 @@ export default class MainRenderer implements Initializeable {
   }
 
   updateGrid(): void {
-    this.logger.info("Updating grid");
-
     for (let i = 0; i < this.grid.getTotalCells(); ++i) {
       const block = this.grid.getValue()[i];
 
@@ -160,8 +165,6 @@ export default class MainRenderer implements Initializeable {
   }
 
   updateTetromino(tetromino: Tetromino): void {
-    this.logger.info("Updating tetromino");
-
     const shape = tetromino.getTetrominoBody().getShape();
     const position = tetromino.getTetrominoBody().getPosition();
     const posX = position.getX();
@@ -183,8 +186,6 @@ export default class MainRenderer implements Initializeable {
     if (!Config.getInstance().getGameplayConfig().getEnableGhost()) {
       return;
     }
-
-    this.logger.info("Updating ghost tetromino");
 
     const shape = tetromino.getTetrominoBody().getShape();
     const position = tetromino.getTetrominoBody().getPosition();

@@ -34,7 +34,7 @@ export default class Game implements Initializeable {
     this.logger = Logger.createLogger(`Game#${this.id}`);
     this.app = new (Libraries.getPIXI().Application)();
     this.grid = new Grid(screenConfig.getRows(), screenConfig.getColumns());
-    this.mainRenderer = new MainRenderer(this, this.grid);
+    this.mainRenderer = new MainRenderer(this.app, this.grid);
     this.tetrisContainer = new TetrisContainer();
     this.tetrominoBag = new TetrominoBag();
     this.initialized = false;
@@ -42,11 +42,6 @@ export default class Game implements Initializeable {
   }
 
   private update(ticker: Ticker): void {
-    this.logger.groupCollapsed(
-      "Game Update",
-      "New tick... Updating game state"
-    );
-
     const currentTetromino = this.tetrominoBag.getCurrentTetronimo();
 
     this.mainRenderer.updateGrid();
@@ -55,7 +50,6 @@ export default class Game implements Initializeable {
       currentTetromino
     );
     this.mainRenderer.updateTetromino(currentTetromino);
-    this.logger.groupEnd();
   }
 
   async initialize(): Promise<void> {
@@ -66,6 +60,7 @@ export default class Game implements Initializeable {
       autoDensity: true,
       backgroundAlpha: 0,
       resizeTo: this.tetrisContainer.getElement(),
+      preference: "webgpu",
     });
     this.logger.info("Adding app instance's canvas");
     this.tetrisContainer.getElement().appendChild(this.app.canvas);
@@ -73,6 +68,7 @@ export default class Game implements Initializeable {
     await this.mainRenderer.initialize();
     await this.tetrominoBag.initialize();
     this.logger.groupEnd();
+
     this.initialized = true;
   }
 
