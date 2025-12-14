@@ -19,10 +19,16 @@
 
         min-height: 100dvh;
       }
+      #game-container {
+        min-width: 100%;
+
+        & > div {
+          min-width: 100%;
+        }
+      }
       canvas {
         max-width: 100%;
         max-height: 100%;
-
         display: block;
       }
     </style>

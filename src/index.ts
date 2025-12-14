@@ -18,8 +18,6 @@ async function init(): Promise<void> {
   await Libraries.getPIXI().Assets.load("/spritesheet/data.json");
   logger.groupEnd();
 
-  Libraries.getPIXI_SETTINGS().settings.RESOLUTION =
-    window.devicePixelRatio || 1;
   const game = new Game();
   const gameContainer = document.getElementById("game-container");
 

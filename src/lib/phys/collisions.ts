@@ -23,7 +23,7 @@ export function collidesBottom<T>(
         return true;
       }
 
-      const i = grid.get1DIndexFromCoords(x, realY);
+      const i = grid.get1DIndexFromCoords(position.getX() + x, realY);
 
       if (grid.getValue()[i] !== null) {
         return true;
@@ -54,7 +54,7 @@ export function collidesTop<T>(
         return true;
       }
 
-      const i = grid.get1DIndexFromCoords(x, realY);
+      const i = grid.get1DIndexFromCoords(position.getX() + x, realY);
 
       if (grid.getValue()[i] !== null) {
         return true;

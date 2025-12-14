@@ -25,14 +25,6 @@ export const KICK_DATA = Object.freeze({
   NONE: {},
 } as const);
 
-export const GRAVITY = Object.freeze({
-  SUBZERO: null,
-  RELAXED: 60,
-  ENGAGING: 30,
-  SPICY: 15,
-  STATIC: 0,
-} as const);
-
 export const ROTATION = Object.freeze({
   CLOCKWISE: 1,
   COUNTER_CLOCKWISE: -1,
@@ -257,6 +249,42 @@ export const SRS_KICK_DATA = Object.freeze([
  */
 export const MAX_TETROMINO_ROTATIONS = 4;
 
+export const GRAVITY_ROWS_PER_FRAME_BY_LEVEL = Object.freeze([
+  1 / 48,
+  1 / 43,
+  1 / 38,
+  1 / 33,
+  1 / 28,
+  1 / 23,
+  1 / 18,
+  1 / 13,
+  1 / 8,
+  1 / 6,
+] as const);
+
+export const GRAVITY = Object.freeze([
+  "SUBZERO",
+  "RELAXED",
+  "NORMAL",
+  "ENGAGING",
+  "SPICY",
+  "STATIC",
+] as const);
+
+export const GRAVITY_PER_MODE: Record<(typeof GRAVITY)[number], GravityConfig> =
+  {
+    SUBZERO: { type: "none" },
+    RELAXED: { type: "scaled", multiplier: 0.5 },
+    NORMAL: { type: "scaled", multiplier: 1 },
+    ENGAGING: { type: "scaled", multiplier: 1.5 },
+    SPICY: { type: "scaled", multiplier: 2 },
+    STATIC: { type: "instant" },
+  };
+
+export type GravityConfig =
+  | { type: "none" }
+  | { type: "scaled"; multiplier: number }
+  | { type: "instant" };
 export type Rotation = (typeof ROTATION)[keyof typeof ROTATION];
 export type SpriteType = (typeof SPRITE_TYPES)[number];
 export type TetrominoNames = (typeof TETROMINO_NAMES)[number];

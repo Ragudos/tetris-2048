@@ -1,4 +1,4 @@
-import type { Ticker } from "pixi.js";
+import { Ticker } from "pixi.js";
 
 import Grid from "@/Grid";
 import Tetromino from "./Tetromino";
@@ -6,14 +6,19 @@ import TetrominoBag from "./TetrominoBag";
 import Scorer from "@/lib/scorer/Scorer";
 import { collidesBottom, collidesTop } from "@/lib/phys/collisions";
 import Config from "@/lib/config/Config";
+import { GRAVITY_PER_MODE, GRAVITY_ROWS_PER_FRAME_BY_LEVEL } from "@/constants";
+import GlobalAction from "@/lib/input/GlobalAction";
+import { ControlAction } from "@/lib/input/ActionProcessor";
 
 export class TetrominoHandlerUpdateState {
   private locked: boolean;
   private didGoNext: boolean;
+  private didMoveSideways: boolean;
 
-  constructor(locked: boolean, didGoNext: boolean) {
+  constructor(locked: boolean, didGoNext: boolean, didMoveSideways: boolean) {
     this.locked = locked;
     this.didGoNext = didGoNext;
+    this.didMoveSideways = didMoveSideways;
   }
 
   getLocked(): boolean {
@@ -23,53 +28,61 @@ export class TetrominoHandlerUpdateState {
   getDidGoNext(): boolean {
     return this.didGoNext;
   }
+
+  getDidMoveSideways(): boolean {
+    return this.didMoveSideways;
+  }
 }
 
 export class Gravity {
-  private static GRAVITY_ROWS_PER_FRAME_BY_LEVEL = Object.freeze([
-    1 / 48,
-    1 / 43,
-    1 / 38,
-    1 / 33,
-    1 / 28,
-    1 / 23,
-    1 / 18,
-    1 / 13,
-    1 / 8,
-    1 / 6,
-  ] as const);
-  private softDropMultiplier;
-  private softDrop: boolean;
-  private hardDrop: boolean;
+  private softDropMultiplier: number;
   private dropAccumulator: number;
+  private hardDrop: boolean;
 
   constructor() {
     this.softDropMultiplier = 20;
-    this.softDrop = false;
-    this.hardDrop = false;
     this.dropAccumulator = 0;
+    this.hardDrop = false;
   }
 
-  getGravityRowsPerFrame(level: number): number {
-    return Gravity.GRAVITY_ROWS_PER_FRAME_BY_LEVEL[
-      Math.min(level, Gravity.GRAVITY_ROWS_PER_FRAME_BY_LEVEL.length - 1)
-    ];
+  getBaseGravity(): number {
+    const gravity =
+      GRAVITY_PER_MODE[
+        Config.getInstance().getGameplayConfig().getGravityMode()
+      ];
+
+    if (gravity.type === "none") {
+      return 0;
+    }
+
+    if (gravity.type === "instant") {
+      return Infinity;
+    }
+
+    const base =
+      GRAVITY_ROWS_PER_FRAME_BY_LEVEL[
+        Math.min(
+          Scorer.getInstance().getScoreData().getLevel(),
+          GRAVITY_ROWS_PER_FRAME_BY_LEVEL.length - 1
+        )
+      ];
+
+    return base * gravity.multiplier;
   }
 
-  update(ticker: Ticker) {
+  update(ticker: Ticker): void {
     if (this.hardDrop) {
-      this.dropAccumulator = 0;
-      this.softDrop = false;
-
       return;
     }
 
-    const level = Scorer.getInstance().getScoreData().getLevel();
-    const baseGravity = this.getGravityRowsPerFrame(level);
-    const gravity = this.softDrop
+    const baseGravity = this.getBaseGravity();
+    const gravity = this.getSoftDrop()
       ? baseGravity * this.softDropMultiplier
       : baseGravity;
-    this.dropAccumulator += gravity * ticker.deltaTime;
+
+    // Gravity is measured in rows per frame, so we multiply by 60 to convert
+    // to rows per second, then by deltaTime to get rows per tick.
+    this.setDropAccumulator(this.dropAccumulator + gravity * ticker.deltaTime);
   }
 
   getDropAccumulator(): number {
@@ -81,7 +94,9 @@ export class Gravity {
   }
 
   getSoftDrop(): boolean {
-    return this.softDrop;
+    return GlobalAction.getInstance()
+      .getActionProcessor()
+      .triggered(ControlAction.SOFT_DROP);
   }
 
   setDropAccumulator(value: number): void {
@@ -90,10 +105,6 @@ export class Gravity {
 
   setHardDrop(value: boolean): void {
     this.hardDrop = value;
-  }
-
-  setSoftDrop(value: boolean): void {
-    this.softDrop = value;
   }
 }
 
@@ -135,7 +146,7 @@ export class Lock {
 
   canReset(): boolean {
     return (
-      Config.getInstance().getGameplayConfig().getLockDelayMaxResets() <=
+      Config.getInstance().getGameplayConfig().getLockDelayMaxResets() >
       this.resetCount
     );
   }
@@ -187,20 +198,24 @@ export default class TetrominoHandler {
 
     this.tetrominoBag.makeNextTetrominoCurrent();
     this.lock.setLocked(false);
+    this.gravity.setDropAccumulator(0);
+    this.gravity.setHardDrop(false);
+
+    // TODO: animations
     this.grid.clearRows();
   }
 
-  update(ticker: Ticker): TetrominoHandlerUpdateState {
+  private drop(ticker: Ticker): boolean {
     let didGoNext: boolean = false;
 
-    this.gravity.update(ticker);
-    this.lock.update(ticker);
+    const actionProcessor = GlobalAction.getInstance().getActionProcessor();
 
-    // check for hard drop key, then perform hard drop with lock
-    // check for soft dorp key, then perform soft drop
-
-    // else, normal drop
-    if (!this.lock.getLocked()) {
+    if (actionProcessor.triggered(ControlAction.HARD_DROP)) {
+      this.hardDrop(true);
+      didGoNext = true;
+    } else if (this.gravity.getDropAccumulator() === Infinity) {
+      this.hardDrop(false);
+    } else {
       const currentTetromino = this.tetrominoBag.getCurrentTetronimo();
       const position = currentTetromino.getTetrominoBody().getPosition();
       const shape = currentTetromino.getTetrominoBody().getShape();
@@ -222,6 +237,37 @@ export default class TetrominoHandler {
         position.setY(position.getY() + 1);
         this.gravity.setDropAccumulator(this.gravity.getDropAccumulator() - 1);
       }
+    }
+
+    return didGoNext;
+  }
+
+  private moveSideways(ticker: Ticker): boolean {
+    const actionProcessor = GlobalAction.getInstance().getActionProcessor();
+
+    if (actionProcessor.triggered(ControlAction.MOVE_LEFT)) {
+      this.tetrominoBag.getCurrentTetronimo().moveLeft(this.grid);
+
+      return true;
+    } else if (actionProcessor.triggered(ControlAction.MOVE_RIGHT)) {
+      this.tetrominoBag.getCurrentTetronimo().moveRight(this.grid);
+
+      return true;
+    }
+
+    return false;
+  }
+
+  update(ticker: Ticker): TetrominoHandlerUpdateState {
+    let didGoNext: boolean = false;
+    let didMoveSideways: boolean = false;
+
+    this.lock.update(ticker);
+
+    if (!this.lock.getLocked()) {
+      this.gravity.update(ticker);
+
+      didGoNext = this.drop(ticker);
     } else {
       if (
         this.lock.getTimeSinceLockDelay() >=
@@ -232,7 +278,31 @@ export default class TetrominoHandler {
       }
     }
 
-    return new TetrominoHandlerUpdateState(this.lock.getLocked(), didGoNext);
+    if (!didGoNext) {
+      didMoveSideways = this.moveSideways(ticker);
+
+      if (didMoveSideways && this.lock.getLocked() && this.lock.canReset()) {
+        this.lock.resetLock();
+
+        const currentTetromino = this.tetrominoBag.getCurrentTetronimo();
+        const position = currentTetromino.getTetrominoBody().getPosition();
+        const shape = currentTetromino.getTetrominoBody().getShape();
+
+        if (collidesBottom(this.grid, position, shape, 1)) {
+          if (Config.getInstance().getGameplayConfig().getEnableLock()) {
+            this.lock.setLocked(true);
+          } else {
+            this.nextTetromino();
+          }
+        }
+      }
+    }
+
+    return new TetrominoHandlerUpdateState(
+      this.lock.getLocked(),
+      didGoNext,
+      didMoveSideways
+    );
   }
 
   hardDrop(lock: boolean = true): void {

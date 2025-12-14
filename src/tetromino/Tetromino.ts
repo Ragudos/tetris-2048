@@ -10,6 +10,8 @@ import {
 import Config from "@config/Config";
 import { rotateMatrix } from "@util/matrix";
 import TetrominoBody from "./TetrominoBody";
+import Grid from "@/Grid";
+import { collidesLeft, collidesRight } from "@/lib/phys/collisions";
 
 export default class Tetromino implements Cloneable<Tetromino> {
   private name: TetrominoNames;
@@ -42,6 +44,32 @@ export default class Tetromino implements Cloneable<Tetromino> {
         initialPosition.clone()
       )
     );
+  }
+
+  moveLeft(grid: Grid<Tetromino>): void {
+    const position = this.tetrominoBody.getPosition();
+    const shape = this.tetrominoBody.getShape();
+
+    if (collidesLeft(grid, position, shape, 1)) {
+      return;
+    }
+
+    this.tetrominoBody
+      .getPosition()
+      .setX(this.tetrominoBody.getPosition().getX() - 1);
+  }
+
+  moveRight(grid: Grid<Tetromino>): void {
+    const position = this.tetrominoBody.getPosition();
+    const shape = this.tetrominoBody.getShape();
+
+    if (collidesRight(grid, position, shape, 1)) {
+      return;
+    }
+
+    this.tetrominoBody
+      .getPosition()
+      .setX(this.tetrominoBody.getPosition().getX() + 1);
   }
 
   clone(): Tetromino {

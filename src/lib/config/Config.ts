@@ -1,6 +1,6 @@
 import Cloneable from "@/common/Cloneable";
-import { KickDataKey, SpriteType } from "@/constants";
-import { en } from "zod/locales";
+import { GRAVITY, KickDataKey, SpriteType } from "@/constants";
+import InputMap from "../input/InputMap";
 
 export default class Config implements Cloneable<Config> {
   private static instance: Config;
@@ -26,7 +26,8 @@ export default class Config implements Cloneable<Config> {
       "blocky",
       "SRS",
       true,
-      true
+      true,
+      "NORMAL"
     );
   }
 
@@ -58,6 +59,7 @@ export class GameplayConfig implements Cloneable<GameplayConfig> {
   private kickDataKey: KickDataKey;
   private enableGhost: boolean;
   private enableLock: boolean;
+  private gravityMode: (typeof GRAVITY)[number];
 
   constructor(
     lockDelayMaxResets: number,
@@ -65,7 +67,8 @@ export class GameplayConfig implements Cloneable<GameplayConfig> {
     spriteType: SpriteType,
     kickDataKey: KickDataKey,
     enableGhost: boolean,
-    enableLock: boolean
+    enableLock: boolean,
+    gravityMode: (typeof GRAVITY)[number]
   ) {
     this.lockDelayMaxResets = lockDelayMaxResets;
     this.lockDelayDt = lockDelayDt;
@@ -73,6 +76,7 @@ export class GameplayConfig implements Cloneable<GameplayConfig> {
     this.kickDataKey = kickDataKey;
     this.enableGhost = enableGhost;
     this.enableLock = enableLock;
+    this.gravityMode = gravityMode;
   }
 
   clone(): GameplayConfig {
@@ -82,7 +86,8 @@ export class GameplayConfig implements Cloneable<GameplayConfig> {
       this.spriteType,
       this.kickDataKey,
       this.enableGhost,
-      this.enableLock
+      this.enableLock,
+      this.gravityMode
     );
   }
 
@@ -109,8 +114,11 @@ export class GameplayConfig implements Cloneable<GameplayConfig> {
   getEnableLock(): boolean {
     return this.enableLock;
   }
-}
 
+  getGravityMode(): (typeof GRAVITY)[number] {
+    return this.gravityMode;
+  }
+}
 export class ControlsConfig implements Cloneable<ControlsConfig> {
   /**
    * How many process frames before accepting the input

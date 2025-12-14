@@ -11,7 +11,7 @@ import TetrominoBag from "./tetromino/TetrominoBag";
 import Tetromino from "./tetromino/Tetromino";
 import GhostTetromino from "./tetromino/GhostTetromino";
 import TetrominoHandler from "./tetromino/TetrominoHandler";
-import { C } from "node_modules/vitest/dist/chunks/reporters.d.OXEK7y4s";
+import GlobalAction from "./lib/input/GlobalAction";
 
 /**
  * A Tetris Game.
@@ -46,6 +46,8 @@ export default class Game implements Initializeable {
   }
 
   private update(ticker: Ticker): void {
+    const cloned = this.tetrominoBag.getCurrentTetronimo().clone();
+
     const updateState = this.tetrominoHandler.update(ticker);
 
     if (updateState.getDidGoNext()) {
@@ -54,6 +56,15 @@ export default class Game implements Initializeable {
         this.grid,
         this.tetrominoBag.getCurrentTetronimo()
       );
+    }
+
+    // use cloned since the tetromino may have moved already
+    if (updateState.getDidMoveSideways()) {
+      this.tetrominoGhost.update(
+        this.grid,
+        this.tetrominoBag.getCurrentTetronimo()
+      );
+      this.mainRenderer.resetFlicker(cloned);
     }
 
     this.mainRenderer.updateGrid();
@@ -69,6 +80,8 @@ export default class Game implements Initializeable {
         this.tetrominoBag.getCurrentTetronimo()
       );
     }
+
+    GlobalAction.getInstance().getActionProcessor().getInputMap().endFrame();
   }
 
   async initialize(): Promise<void> {
@@ -80,6 +93,7 @@ export default class Game implements Initializeable {
       backgroundAlpha: 0,
       resizeTo: this.tetrisContainer.getElement(),
       preference: "webgpu",
+      resolution: window.devicePixelRatio || 1,
     });
     this.logger.info("Adding app instance's canvas");
     this.tetrisContainer.getElement().appendChild(this.app.canvas);
@@ -89,6 +103,13 @@ export default class Game implements Initializeable {
     this.logger.groupEnd();
 
     this.initialized = true;
+
+    requestAnimationFrame(() => {
+      this.app.renderer.resize(
+        this.tetrisContainer.getElement().clientWidth,
+        this.tetrisContainer.getElement().clientHeight
+      );
+    });
   }
 
   start(): void {

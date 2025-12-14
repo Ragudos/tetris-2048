@@ -60,7 +60,7 @@ export default class MainRenderer implements Initializeable {
       const sprite = new (Libraries.getPIXI().Sprite)();
       sprite.width = blockSize;
       sprite.height = blockSize;
-      sprite.tint = "#fff";
+      sprite.tint = "rgb(150,150,150)";
 
       this.logger.info("Setting cell position");
       sprite.position.set(point.getX() * blockSize, point.getY() * blockSize);
@@ -85,21 +85,23 @@ export default class MainRenderer implements Initializeable {
     this.initialized = false;
   }
 
-  private setSize(sw: number, sh: number): void {
+  setSize(sw: number, sh: number): void {
     this.logger.groupCollapsed("Resize", "Resizing Main Renderer");
     this.logger.info("Getting config");
 
     const screenConfig = Config.getInstance().getScreenConfig();
     const screenW = screenConfig.getWidth();
     const screenH = screenConfig.getHeight();
-    const scale = Math.min(sw / screenW, sh / screenH, 1);
+    const scale = Math.min(sw / screenW, sh / screenH);
+
+    this.logger.info("Scale calculated:" + scale);
 
     this.logger.info("Setting scale");
     this.pixiContainer.scale.set(scale);
     this.logger.info("Setting position");
     this.pixiContainer.position.set(
-      sw / 2 - (screenW * scale) / 2,
-      sh / 2 - (screenH * scale) / 2
+      (sw - screenW * scale) / 2,
+      (sh - screenH * scale) / 2
     );
     this.logger.groupEnd();
   }

@@ -1,7 +1,8 @@
+import Cloneable from "./common/Cloneable";
 import Point from "./common/Point";
 import Tetromino from "./tetromino/Tetromino";
 
-export default class Grid<T> {
+export default class Grid<T> implements Cloneable<Grid<T>> {
   private rows: number;
   private columns: number;
   private value: (T | null)[];
@@ -10,6 +11,13 @@ export default class Grid<T> {
     this.rows = rows;
     this.columns = columns;
     this.value = new Array(rows * columns).fill(null);
+  }
+
+  clone(): Grid<T> {
+    const newGrid = new Grid<T>(this.rows, this.columns);
+    newGrid.value = [...this.value];
+
+    return newGrid;
   }
 
   getRows(): number {
