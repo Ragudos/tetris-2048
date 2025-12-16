@@ -1,6 +1,8 @@
+import Cloneable from "@/common/Cloneable";
+
 export type ActionName = string;
 
-export default class InputMap {
+export default class InputMap implements Cloneable<InputMap> {
   private bindings: Map<ActionName, Set<string>>;
   private keyDownSet: Set<string> = new Set<string>();
   private previousKeyDownSet: Set<string> = new Set<string>();
@@ -9,8 +11,8 @@ export default class InputMap {
   private keydownListener: typeof this.onKeyUp;
   private keyupListener: typeof this.onKeyDown;
 
-  constructor(target: Window | HTMLElement = window) {
-    this.bindings = new Map<ActionName, Set<string>>();
+  constructor(target: Window | HTMLElement = window, defaultMap?: Map<ActionName, Set<string>>) {
+    this.bindings = defaultMap ? defaultMap : new Map<ActionName, Set<string>>();
     this.listening = true;
     this.target = target;
     this.keydownListener = this.onKeyDown.bind(this);
@@ -18,6 +20,14 @@ export default class InputMap {
 
     target.addEventListener("keydown", this.keydownListener);
     target.addEventListener("keyup", this.keyupListener);
+  }
+
+  clone(): InputMap {
+    return new InputMap(this.target, this.bindings);
+  }
+
+  getBinding(): typeof this.bindings {
+    return this.bindings;
   }
 
   bind(action: ActionName, ...keys: string[]): void {

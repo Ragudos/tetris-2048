@@ -1,13 +1,16 @@
 import Cloneable from "./common/Cloneable";
 import Point from "./common/Point";
+import Logger from "./lib/log/Logger";
 import Tetromino from "./tetromino/Tetromino";
 
 export default class Grid<T> implements Cloneable<Grid<T>> {
+  private logger: Logger;
   private rows: number;
   private columns: number;
   private value: (T | null)[];
 
   constructor(rows: number, columns: number) {
+    this.logger = Logger.createLogger("Grid");
     this.rows = rows;
     this.columns = columns;
     this.value = new Array(rows * columns).fill(null);
@@ -62,9 +65,7 @@ export default class Grid<T> implements Cloneable<Grid<T>> {
     }
 
     if (index >= total) {
-      throw new RangeError(
-        `Grid index ${index} is out of range (max ${total - 1}).`
-      );
+      throw new RangeError(`Grid index ${index} is out of range (max ${total - 1}).`);
     }
 
     return new Point(index % this.columns, Math.floor(index / this.columns));
@@ -75,9 +76,11 @@ export default class Grid<T> implements Cloneable<Grid<T>> {
   }
 
   occupyGrid(value: T, x: number, y: number): void {
-    // TODO: An occupant metadata
+    // TODO: An occupant metadata instead of the occupant itself
     this.value[this.get1DIndexFromCoords(x, y)] = value;
   }
 
-  clearRows(): void {}
+  clearRows(): void {
+    this.logger.info("Clearing Rows...");
+  }
 }

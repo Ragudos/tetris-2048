@@ -35,9 +35,7 @@ export default class Scorer implements Initializeable {
 
     this.logger.info("Validating saved score");
 
-    const parseResult = await ScoreData.getSCHEMA().safeParseAsync(
-      rawSavedScore || undefined
-    );
+    const parseResult = await ScoreData.getSCHEMA().safeParseAsync(rawSavedScore || undefined);
 
     if (parseResult.error) {
       this.logger.error("Invalid saved score... Deleting");
@@ -45,9 +43,7 @@ export default class Scorer implements Initializeable {
     } else {
       this.logger.info("Saved score is valid.");
 
-      this.savedScore = parseResult.data
-        ? ScoreData.fromJSON(parseResult.data)
-        : undefined;
+      this.savedScore = parseResult.data ? ScoreData.fromJSON(parseResult.data) : undefined;
     }
 
     this.logger.groupEnd();

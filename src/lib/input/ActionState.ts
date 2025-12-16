@@ -3,12 +3,18 @@ export default class ActionState {
   private triggeredOnce: boolean;
   private repeats: number;
   private counter: number;
+  private pressedOn: number;
 
   constructor() {
     this.pressed = false;
     this.triggeredOnce = false;
     this.repeats = 0;
     this.counter = 0;
+    this.pressedOn = 0;
+  }
+
+  getPressedOn(): number {
+    return this.pressedOn;
   }
 
   getPressed(): boolean {
@@ -17,6 +23,11 @@ export default class ActionState {
 
   setPressed(pressed: boolean): void {
     this.pressed = pressed;
+    this.pressedOn = Date.now();
+  }
+
+  resetRepeats(): void {
+    this.repeats = 0;
   }
 
   getTriggeredOnce(): boolean {
@@ -48,5 +59,6 @@ export default class ActionState {
     this.triggeredOnce = false;
     this.repeats = 0;
     this.counter = 0;
+    this.pressedOn = 0;
   }
 }

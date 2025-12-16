@@ -52,9 +52,7 @@ describe("MatrixUtils", () => {
         [2, 4],
         [1, 3],
       ];
-      expect(rotateMatrix(ROTATION.COUNTER_CLOCKWISE, matrix)).toEqual(
-        expected
-      );
+      expect(rotateMatrix(ROTATION.COUNTER_CLOCKWISE, matrix)).toEqual(expected);
     });
 
     it("rotates a 3x3 matrix clockwise", () => {
@@ -82,9 +80,7 @@ describe("MatrixUtils", () => {
         [2, 5, 8],
         [1, 4, 7],
       ];
-      expect(rotateMatrix(ROTATION.COUNTER_CLOCKWISE, matrix)).toEqual(
-        expected
-      );
+      expect(rotateMatrix(ROTATION.COUNTER_CLOCKWISE, matrix)).toEqual(expected);
     });
 
     it("throws an error if matrix is not square", () => {
@@ -92,9 +88,7 @@ describe("MatrixUtils", () => {
         [1, 2, 3],
         [4, 5, 6],
       ];
-      expect(() => rotateMatrix(ROTATION.CLOCKWISE, matrix)).toThrow(
-        "matrix must be square"
-      );
+      expect(() => rotateMatrix(ROTATION.CLOCKWISE, matrix)).toThrow("matrix must be square");
     });
   });
 });

@@ -18,7 +18,7 @@ export default class TetrominoBody implements Cloneable<TetrominoBody> {
     return new TetrominoBody(
       this.amountOfRotations,
       this.shape.map((row) => row.slice()),
-      this.position.clone()
+      this.position.clone(),
     );
   }
 
@@ -30,8 +30,7 @@ export default class TetrominoBody implements Cloneable<TetrominoBody> {
     rotateMatrix(rotation, this.shape);
 
     this.amountOfRotations =
-      (Math.abs(this.amountOfRotations + rotation) % MAX_TETROMINO_ROTATIONS) *
-      rotation;
+      (Math.abs(this.amountOfRotations + rotation) % MAX_TETROMINO_ROTATIONS) * rotation;
   }
 
   resetRotation(): void {

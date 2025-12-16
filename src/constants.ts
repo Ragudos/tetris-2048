@@ -10,15 +10,7 @@ export const TETROMINO_COLORS = Object.freeze({
 
 export const SPRITE_TYPES = Object.freeze(["shiny", "blocky"] as const);
 
-export const TETROMINO_NAMES = Object.freeze([
-  "I",
-  "J",
-  "L",
-  "O",
-  "S",
-  "T",
-  "Z",
-] as const);
+export const TETROMINO_NAMES = Object.freeze(["I", "J", "L", "O", "S", "T", "Z"] as const);
 
 export const KICK_DATA = Object.freeze({
   SRS: {},
@@ -271,15 +263,14 @@ export const GRAVITY = Object.freeze([
   "STATIC",
 ] as const);
 
-export const GRAVITY_PER_MODE: Record<(typeof GRAVITY)[number], GravityConfig> =
-  {
-    SUBZERO: { type: "none" },
-    RELAXED: { type: "scaled", multiplier: 0.5 },
-    NORMAL: { type: "scaled", multiplier: 1 },
-    ENGAGING: { type: "scaled", multiplier: 1.5 },
-    SPICY: { type: "scaled", multiplier: 2 },
-    STATIC: { type: "instant" },
-  };
+export const GRAVITY_PER_MODE: Record<(typeof GRAVITY)[number], GravityConfig> = {
+  SUBZERO: { type: "none" },
+  RELAXED: { type: "scaled", multiplier: 0.5 },
+  NORMAL: { type: "scaled", multiplier: 1 },
+  ENGAGING: { type: "scaled", multiplier: 1.5 },
+  SPICY: { type: "scaled", multiplier: 2 },
+  STATIC: { type: "instant" },
+};
 
 export type GravityConfig =
   | { type: "none" }

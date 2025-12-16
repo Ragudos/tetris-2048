@@ -7,7 +7,7 @@ export function collidesBottom<T>(
   grid: Grid<T>,
   position: Point,
   shape: number[][],
-  offset: number = 0
+  offset: number = 0,
 ): boolean {
   for (let y = 0; y < shape.length; ++y) {
     const row = shape[y];
@@ -38,7 +38,7 @@ export function collidesTop<T>(
   grid: Grid<T>,
   position: Point,
   shape: number[][],
-  offset: number = 0
+  offset: number = 0,
 ): boolean {
   for (let y = 0; y < shape.length; ++y) {
     const row = shape[y];
@@ -69,7 +69,7 @@ export function collidesLeft<T>(
   grid: Grid<T>,
   position: Point,
   shape: number[][],
-  offset: number = 0
+  offset: number = 0,
 ): boolean {
   for (let y = 0; y < shape.length; ++y) {
     const row = shape[y];
@@ -82,10 +82,7 @@ export function collidesLeft<T>(
 
       const realX = position.getX() + x - offset;
 
-      if (
-        realX < 0 ||
-        grid.getValue()[grid.get1DIndexFromCoords(realX, realY)] !== null
-      ) {
+      if (realX < 0 || grid.getValue()[grid.get1DIndexFromCoords(realX, realY)] !== null) {
         return true;
       }
     }
@@ -98,7 +95,7 @@ export function collidesRight<T>(
   grid: Grid<T>,
   position: Point,
   shape: number[][],
-  offset: number = 0
+  offset: number = 0,
 ): boolean {
   for (let y = 0; y < shape.length; ++y) {
     const row = shape[y];
@@ -127,12 +124,12 @@ export function collides<T>(
   grid: Grid<T>,
   position: Point,
   shape: number[][],
-  offsets: Offsets = new Offsets(0, 0, 0, 0)
+  offsets: Offsets = new Offsets(0, 0, 0, 0),
 ): CollisionResult {
   return new CollisionResult(
     collidesTop(grid, position, shape, offsets.getTop()),
     collidesLeft(grid, position, shape, offsets.getLeft()),
     collidesBottom(grid, position, shape, offsets.getBottom()),
-    collidesRight(grid, position, shape, offsets.getRight())
+    collidesRight(grid, position, shape, offsets.getRight()),
   );
 }

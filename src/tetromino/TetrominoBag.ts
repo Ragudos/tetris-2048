@@ -2,16 +2,21 @@ import Point from "@/common/Point";
 import Tetromino from "./Tetromino";
 import { TETROMINO_COLORS } from "@/constants";
 import Initializeable from "@/common/Initializeable";
+import Grid from "@/Grid";
+import Logger from "@/lib/log/Logger";
 
 export default class TetrominoBag implements Initializeable {
+  private logger: Logger;
   private tetrominoes: Tetromino[];
   private counter: number = 0;
 
   private previousTetromino: Tetromino | undefined;
   private currentTetromino: Tetromino | undefined;
   private nextTetromino: Tetromino | undefined;
+  private heldTetromino: Tetromino | undefined;
 
   constructor() {
+    this.logger = Logger.createLogger("TetrominoBag");
     this.tetrominoes = [
       Tetromino.createTetromino("I", new Point(0, 0), TETROMINO_COLORS.I),
       Tetromino.createTetromino("J", new Point(0, 0), TETROMINO_COLORS.J),
@@ -33,20 +38,48 @@ export default class TetrominoBag implements Initializeable {
    * @see https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
    */
   private shuffle(): void {
+    this.logger.info("Shuffling...");
+
     for (let i = 0; i < this.tetrominoes.length; ++i) {
       const j = Math.floor(Math.random() * (i + 1));
 
-      [this.tetrominoes[i], this.tetrominoes[j]] = [
-        this.tetrominoes[j],
-        this.tetrominoes[i],
-      ];
+      [this.tetrominoes[i], this.tetrominoes[j]] = [this.tetrominoes[j], this.tetrominoes[i]];
     }
   }
 
   makeNextTetrominoCurrent(): void {
+    this.logger.info("Making next tetromino the current one");
+
     this.previousTetromino = this.currentTetromino;
     this.currentTetromino = this.getNextTetromino();
     this.nextTetromino = this.getTetromino();
+  }
+
+  swap(): void {
+    this.logger.info("Swapping held and current tetromino.");
+
+    if (!this.heldTetromino) {
+      this.heldTetromino = this.currentTetromino = this.nextTetromino = this.getTetromino();
+    } else {
+      const tmp = this.heldTetromino;
+
+      this.heldTetromino = this.currentTetromino;
+      this.currentTetromino = tmp;
+    }
+
+    const currPos = this.currentTetromino.getTetrominoBody().getPosition();
+    const heldPos = this.currentTetromino.getTetrominoBody().getPosition();
+
+    this.currentTetromino.getTetrominoBody().resetRotation();
+    this.heldTetromino!.getTetrominoBody().resetRotation();
+    currPos.setX(0);
+    currPos.setY(0);
+    heldPos.setX(0);
+    heldPos.setY(0);
+  }
+
+  getHeldTetromino(): Tetromino | undefined {
+    return this.heldTetromino;
   }
 
   getCurrentTetronimo(): Tetromino {

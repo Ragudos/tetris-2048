@@ -4,14 +4,9 @@ import { Libraries } from "./Libraries";
 import TetrisContainer from "./TetrisContainer";
 import Logger from "./lib/log/Logger";
 import MainRenderer from "./lib/renderer/MainRenderer";
-import Grid from "./Grid";
-import Config from "./lib/config/Config";
 import Initializeable from "./common/Initializeable";
-import TetrominoBag from "./tetromino/TetrominoBag";
-import Tetromino from "./tetromino/Tetromino";
-import GhostTetromino from "./tetromino/GhostTetromino";
-import TetrominoHandler from "./tetromino/TetrominoHandler";
 import GlobalAction from "./lib/input/GlobalAction";
+import GameState from "./lib/state/GameState";
 
 /**
  * A Tetris Game.
@@ -22,65 +17,24 @@ export default class Game implements Initializeable {
   private id: string;
   private logger: Logger;
   private app: Application;
-  private grid: Grid<Tetromino>;
+  private gameState: GameState;
   private mainRenderer: MainRenderer;
   private tetrisContainer: TetrisContainer;
-  private tetrominoBag: TetrominoBag;
   private initialized: boolean;
-  private tetrominoGhost: GhostTetromino;
-  private tetrominoHandler: TetrominoHandler;
 
   constructor() {
-    const screenConfig = Config.getInstance().getScreenConfig();
-
     this.id = generateRandomId();
     this.logger = Logger.createLogger(`Game#${this.id}`);
     this.app = new (Libraries.getPIXI().Application)();
-    this.grid = new Grid(screenConfig.getRows(), screenConfig.getColumns());
-    this.mainRenderer = new MainRenderer(this.app, this.grid);
+    this.gameState = new GameState();
+    this.mainRenderer = new MainRenderer(this.app, this.gameState);
     this.tetrisContainer = new TetrisContainer();
-    this.tetrominoBag = new TetrominoBag();
     this.initialized = false;
-    this.tetrominoGhost = new GhostTetromino();
-    this.tetrominoHandler = new TetrominoHandler(this.grid, this.tetrominoBag);
   }
 
   private update(ticker: Ticker): void {
-    const cloned = this.tetrominoBag.getCurrentTetronimo().clone();
-
-    const updateState = this.tetrominoHandler.update(ticker);
-
-    if (updateState.getDidGoNext()) {
-      this.mainRenderer.resetFlicker(this.tetrominoBag.getPreviousTetromino()!);
-      this.tetrominoGhost.update(
-        this.grid,
-        this.tetrominoBag.getCurrentTetronimo()
-      );
-    }
-
-    // use cloned since the tetromino may have moved already
-    if (updateState.getDidMoveSideways()) {
-      this.tetrominoGhost.update(
-        this.grid,
-        this.tetrominoBag.getCurrentTetronimo()
-      );
-      this.mainRenderer.resetFlicker(cloned);
-    }
-
-    this.mainRenderer.updateGrid();
-    this.mainRenderer.updateGhost(
-      this.tetrominoGhost.getPositionY(),
-      this.tetrominoBag.getCurrentTetronimo()
-    );
-    this.mainRenderer.updateTetromino(this.tetrominoBag.getCurrentTetronimo());
-
-    if (updateState.getLocked()) {
-      this.mainRenderer.flickerBlock(
-        ticker,
-        this.tetrominoBag.getCurrentTetronimo()
-      );
-    }
-
+    this.gameState.update(ticker);
+    this.mainRenderer.update(ticker);
     GlobalAction.getInstance().getActionProcessor().getInputMap().endFrame();
   }
 
@@ -97,9 +51,10 @@ export default class Game implements Initializeable {
     });
     this.logger.info("Adding app instance's canvas");
     this.tetrisContainer.getElement().appendChild(this.app.canvas);
+    this.logger.info("Initializing Game State");
+    await this.gameState.initialize();
     this.logger.info("Initializing main renderer");
     await this.mainRenderer.initialize();
-    await this.tetrominoBag.initialize();
     this.logger.groupEnd();
 
     this.initialized = true;
@@ -107,26 +62,34 @@ export default class Game implements Initializeable {
     requestAnimationFrame(() => {
       this.app.renderer.resize(
         this.tetrisContainer.getElement().clientWidth,
-        this.tetrisContainer.getElement().clientHeight
+        this.tetrisContainer.getElement().clientHeight,
       );
     });
   }
 
   start(): void {
-    if (!this.initialized || !this.app.ticker.started) {
+    if (!this.initialized) {
+      this.logger.warn("Initialize the Game first before starting.");
+
+      return;
+    }
+
+    if (!this.app.ticker.started) {
+      this.logger.info("Resuming Game...");
+      this.app.ticker.start();
+
       return;
     }
 
     this.logger.info("Starting Game...");
     this.app.ticker.add(this.update, this);
     this.app.stage.addChild(this.mainRenderer.getPixiContainer());
-    this.tetrominoGhost.update(
-      this.grid,
-      this.tetrominoBag.getCurrentTetronimo()
-    );
   }
 
-  stop(): void {}
+  stop(): void {
+    this.logger.info("Pausing Game...");
+    this.app.stop();
+  }
 
   destroy(): void {
     this.app.destroy(true, true);

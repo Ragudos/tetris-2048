@@ -4,7 +4,7 @@
  */
 export function debounce<F extends (...args: any[]) => void>(
   fn: F,
-  delay: number
+  delay: number,
 ): (...args: Parameters<F>) => void {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
 

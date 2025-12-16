@@ -114,9 +114,7 @@ describe("Scorer", () => {
 
     expect(scorer.getSavedScore()).toBeUndefined();
     expect(localStorage.getItem(Scorer.SAVED_SCORE_KEY)).toBeNull();
-    expect(mockLogger.error).toHaveBeenCalledWith(
-      "Invalid saved score... Deleting"
-    );
+    expect(mockLogger.error).toHaveBeenCalledWith("Invalid saved score... Deleting");
   });
 
   it("returns the same singleton instance", () => {
