@@ -78,60 +78,44 @@ export default class GameState implements Initializeable {
   private rotateSrs(rotation: Rotation): boolean {
     this.logger.info("Applying SRS");
 
-    const currentTetromino = this.tetrominoBag.getCurrentTetronimo();
-    const pos = currentTetromino.getTetrominoBody().getPosition();
-    const tmpShape = currentTetromino.getTetrominoBody().cloneShape();
-    const addend = currentTetromino.getName() === "I" ? 8 : 0;
+    const current = this.tetrominoBag.getCurrentTetronimo();
+    const body = current.getTetrominoBody();
+    const pos = body.getPosition();
+    const tmpShape = body.cloneShape();
 
     rotateMatrix(rotation, tmpShape);
 
-    for (let y = 0; y < tmpShape.length; ++y) {
-      const row = tmpShape[y];
+    const addend = current.getName() === "I" ? 8 : 0;
+    const absNextRotation =
+      Math.abs(body.getAmountOfRotations() + rotation) % 4;
+    const kickIdx =
+      rotation === ROTATION.COUNTER_CLOCKWISE
+        ? addend + absNextRotation + 4
+        : addend + absNextRotation;
 
-      for (let x = 0; x < row.length; ++x) {
-        if (!row[x]) {
-          continue;
-        }
+    for (let kick = 0; kick < SRS_KICK_DATA[kickIdx].length; ++kick) {
+      const [dx, dy] = SRS_KICK_DATA[kickIdx][kick];
 
-        const absNextRotation = Math.abs(
-          currentTetromino.getTetrominoBody().getAmountOfRotations() + rotation,
-        );
+      const newPoint = new Point(pos.getX() + dx, pos.getY() - dy);
 
-        let kickIdx: number;
-
-        switch (rotation) {
-          case ROTATION.COUNTER_CLOCKWISE:
-            {
-              kickIdx = addend + (absNextRotation % 4) + 4;
-            }
-            break;
-          case ROTATION.CLOCKWISE:
-            {
-              kickIdx = addend + (absNextRotation % 4);
-            }
-            break;
-        }
-
-        for (let kick = 0; kick < SRS_KICK_DATA[0].length; ++kick) {
-          const kickData = SRS_KICK_DATA[kickIdx][kick];
-          const newPosX = pos.getX() + kickData[0];
-          const newPosY = pos.getY() + kickData[1] * -1;
-          const newPoint = new Point(newPosX, newPosY);
-
-          if (collides(this.grid, newPoint, tmpShape, new Offsets(0, 0, 0, 0)).collidesAny()) {
-            continue;
-          }
-
-          this.logger.info("Chosen SRS: " + kickData);
-          pos.setX(newPoint.getX());
-          pos.setY(newPoint.getY());
-          currentTetromino.getTetrominoBody().rotate(rotation);
-
-          return true;
-        }
-
-        return false;
+      if (
+        collides(
+          this.grid,
+          newPoint,
+          tmpShape,
+          new Offsets(0, 0, 0, 0)
+        ).collidesAny()
+      ) {
+        continue;
       }
+
+      this.logger.info("Chosen SRS: " + SRS_KICK_DATA[kickIdx][kick]);
+
+      pos.setX(newPoint.getX());
+      pos.setY(newPoint.getY());
+      body.rotate(rotation);
+
+      return true;
     }
 
     return false;
@@ -171,8 +155,16 @@ export default class GameState implements Initializeable {
     this.didChangeOrientation = false;
     const actionProcessor = GlobalAction.getInstance().getActionProcessor();
 
-    if (!this.lockState.getLocked() || (this.lockState.getLocked() && this.lockState.canReset())) {
-      switch (actionProcessor.chooseAction(ControlAction.MOVE_LEFT, ControlAction.MOVE_RIGHT)) {
+    if (
+      !this.lockState.getLocked() ||
+      (this.lockState.getLocked() && this.lockState.canReset())
+    ) {
+      switch (
+        actionProcessor.chooseAction(
+          ControlAction.MOVE_LEFT,
+          ControlAction.MOVE_RIGHT
+        )
+      ) {
         case ControlAction.MOVE_LEFT:
           {
             this.tetrominoBag.getCurrentTetronimo().moveLeft(this.grid);
@@ -193,7 +185,12 @@ export default class GameState implements Initializeable {
           break;
       }
 
-      switch (actionProcessor.chooseAction(ControlAction.ROTATE_CW, ControlAction.ROTATE_CCW)) {
+      switch (
+        actionProcessor.chooseAction(
+          ControlAction.ROTATE_CW,
+          ControlAction.ROTATE_CCW
+        )
+      ) {
         case ControlAction.ROTATE_CW:
           {
             this.logger.groupCollapsed("Rotating", "Rotating Clockwise");
@@ -209,7 +206,10 @@ export default class GameState implements Initializeable {
           break;
         case ControlAction.ROTATE_CCW:
           {
-            this.logger.groupCollapsed("Rotating", "Rotating Counter Clockwise");
+            this.logger.groupCollapsed(
+              "Rotating",
+              "Rotating Counter Clockwise"
+            );
             if (this.rotate(ROTATION.COUNTER_CLOCKWISE)) {
               this.logger.info("Rotation sucessful");
               this.lockState.resetLock();
@@ -225,30 +225,30 @@ export default class GameState implements Initializeable {
 
     this.lockState.update(ticker);
 
-    if (!this.lockState.getLocked()) {
+    if (actionProcessor.triggered(ControlAction.HARD_DROP)) {
+      this.hardDrop(true);
+    } else if (!this.lockState.getLocked()) {
       this.gravityState.update(ticker);
 
-      if (actionProcessor.triggered(ControlAction.HARD_DROP)) {
-        this.hardDrop(true);
-      } else {
-        const currentTetromino = this.tetrominoBag.getCurrentTetronimo();
-        const position = currentTetromino.getTetrominoBody().getPosition();
-        const shape = currentTetromino.getTetrominoBody().getShape();
+      const currentTetromino = this.tetrominoBag.getCurrentTetronimo();
+      const position = currentTetromino.getTetrominoBody().getPosition();
+      const shape = currentTetromino.getTetrominoBody().getShape();
 
-        while (this.gravityState.getRowsToOccupy() >= 1) {
-          if (collidesBottom(this.grid, position, shape, 1)) {
-            if (Config.getInstance().getGameplayConfig().getEnableLock()) {
-              this.lockState.setLocked(true);
-            } else {
-              this.nextTetromino();
-            }
-
-            break;
+      while (this.gravityState.getRowsToOccupy() >= 1) {
+        if (collidesBottom(this.grid, position, shape, 1)) {
+          if (Config.getInstance().getGameplayConfig().getEnableLock()) {
+            this.lockState.setLocked(true);
+          } else {
+            this.nextTetromino();
           }
 
-          position.setY(position.getY() + 1);
-          this.gravityState.setRowsToOccupy(this.gravityState.getRowsToOccupy() - 1);
+          break;
         }
+
+        position.setY(position.getY() + 1);
+        this.gravityState.setRowsToOccupy(
+          this.gravityState.getRowsToOccupy() - 1
+        );
       }
     } else if (this.lockState.getLockExpired()) {
       this.nextTetromino();
@@ -269,7 +269,10 @@ export default class GameState implements Initializeable {
     const shape = block.getTetrominoBody().getShape();
     const pos = block.getTetrominoBody().getPosition();
 
-    if (collidesTop(this.grid, pos, shape, 2) && collidesBottom(this.grid, pos, shape, 1)) {
+    if (
+      collidesTop(this.grid, pos, shape, 2) &&
+      collidesBottom(this.grid, pos, shape, 1)
+    ) {
       // gameover
       return;
     }
