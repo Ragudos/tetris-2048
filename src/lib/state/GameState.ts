@@ -4,13 +4,17 @@ import Tetromino from "../../tetromino/Tetromino";
 import TetrominoBag from "../../tetromino/TetrominoBag";
 import TetrominoGhost from "../../tetromino/TetrominoGhost";
 import GravityState from "./GravityState";
-import type { Ticker } from "pixi.js";
+import { triangulateWithHoles, type Ticker } from "pixi.js";
 import LockState from "./LockState";
 import GlobalAction from "../input/GlobalAction";
-import { ControlAction } from "../input/ActionProcessor";
-import { collidesBottom, collidesTop } from "../phys/collisions";
+import { collides, collidesBottom, collidesTop } from "../phys/collisions";
 import Initializeable from "@/common/Initializeable";
 import Logger from "../log/Logger";
+import { ControlAction } from "../input/ControlAction";
+import { KICK_DATA, Rotation, ROTATION, SRS_KICK_DATA } from "@/constants";
+import { rotateMatrix } from "../util/matrix";
+import Point from "@/common/Point";
+import Offsets from "../phys/Offsets";
 
 export default class GameState implements Initializeable {
   private logger: Logger;
@@ -71,6 +75,82 @@ export default class GameState implements Initializeable {
     return this.didChangeOrientation;
   }
 
+  private rotateSrs(rotation: Rotation): boolean {
+    this.logger.info("Applying SRS");
+
+    const currentTetromino = this.tetrominoBag.getCurrentTetronimo();
+    const pos = currentTetromino.getTetrominoBody().getPosition();
+    const tmpShape = currentTetromino.getTetrominoBody().cloneShape();
+    const addend = currentTetromino.getName() === "I" ? 8 : 0;
+
+    rotateMatrix(rotation, tmpShape);
+
+    for (let y = 0; y < tmpShape.length; ++y) {
+      const row = tmpShape[y];
+
+      for (let x = 0; x < row.length; ++x) {
+        if (!row[x]) {
+          continue;
+        }
+
+        const absNextRotation = Math.abs(
+          currentTetromino.getTetrominoBody().getAmountOfRotations() + rotation,
+        );
+
+        let kickIdx: number;
+
+        switch (rotation) {
+          case ROTATION.COUNTER_CLOCKWISE:
+            {
+              kickIdx = addend + (absNextRotation % 4) + 4;
+            }
+            break;
+          case ROTATION.CLOCKWISE:
+            {
+              kickIdx = addend + (absNextRotation % 4);
+            }
+            break;
+        }
+
+        for (let kick = 0; kick < SRS_KICK_DATA[0].length; ++kick) {
+          const kickData = SRS_KICK_DATA[kickIdx][kick];
+          const newPosX = pos.getX() + kickData[0];
+          const newPosY = pos.getY() + kickData[1] * -1;
+          const newPoint = new Point(newPosX, newPosY);
+
+          if (collides(this.grid, newPoint, tmpShape, new Offsets(0, 0, 0, 0)).collidesAny()) {
+            continue;
+          }
+
+          this.logger.info("Chosen SRS: " + kickData);
+          pos.setX(newPoint.getX());
+          pos.setY(newPoint.getY());
+          currentTetromino.getTetrominoBody().rotate(rotation);
+
+          return true;
+        }
+
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  private rotate(rotation: Rotation): boolean {
+    switch (Config.getInstance().getGameplayConfig().getKickDataKey()) {
+      case "SRS": {
+        return this.rotateSrs(rotation);
+      }
+      case KICK_DATA.NONE:
+        {
+        }
+        break;
+    }
+
+    return false;
+  }
+
   private nextTetromino(): void {
     this.logger.info("Going to next Tetromino");
 
@@ -91,37 +171,56 @@ export default class GameState implements Initializeable {
     this.didChangeOrientation = false;
     const actionProcessor = GlobalAction.getInstance().getActionProcessor();
 
-    switch (actionProcessor.chooseAction(ControlAction.MOVE_LEFT, ControlAction.MOVE_RIGHT)) {
-      case ControlAction.MOVE_LEFT:
-        {
-          this.tetrominoBag.getCurrentTetronimo().moveLeft(this.grid);
-          this.lockState.resetLock();
-          this.tetrominoGhost.update(this.grid);
+    if (!this.lockState.getLocked() || (this.lockState.getLocked() && this.lockState.canReset())) {
+      switch (actionProcessor.chooseAction(ControlAction.MOVE_LEFT, ControlAction.MOVE_RIGHT)) {
+        case ControlAction.MOVE_LEFT:
+          {
+            this.tetrominoBag.getCurrentTetronimo().moveLeft(this.grid);
+            this.lockState.resetLock();
+            this.tetrominoGhost.update(this.grid);
 
-          this.didChangeOrientation = true;
-        }
-        break;
-      case ControlAction.MOVE_RIGHT:
-        {
-          this.tetrominoBag.getCurrentTetronimo().moveRight(this.grid);
-          this.lockState.resetLock();
-          this.tetrominoGhost.update(this.grid);
+            this.didChangeOrientation = true;
+          }
+          break;
+        case ControlAction.MOVE_RIGHT:
+          {
+            this.tetrominoBag.getCurrentTetronimo().moveRight(this.grid);
+            this.lockState.resetLock();
+            this.tetrominoGhost.update(this.grid);
 
-          this.didChangeOrientation = true;
-        }
-        break;
-    }
+            this.didChangeOrientation = true;
+          }
+          break;
+      }
 
-    if (actionProcessor.triggered(ControlAction.ROTATE_CW)) {
-      this.tetrominoGhost.update(this.grid);
+      switch (actionProcessor.chooseAction(ControlAction.ROTATE_CW, ControlAction.ROTATE_CCW)) {
+        case ControlAction.ROTATE_CW:
+          {
+            this.logger.groupCollapsed("Rotating", "Rotating Clockwise");
+            if (this.rotate(ROTATION.CLOCKWISE)) {
+              this.logger.info("Rotation sucessful");
+              this.lockState.resetLock();
+              this.tetrominoGhost.update(this.grid);
 
-      this.didChangeOrientation = true;
-    }
+              this.didChangeOrientation = true;
+            }
+            this.logger.groupEnd();
+          }
+          break;
+        case ControlAction.ROTATE_CCW:
+          {
+            this.logger.groupCollapsed("Rotating", "Rotating Counter Clockwise");
+            if (this.rotate(ROTATION.COUNTER_CLOCKWISE)) {
+              this.logger.info("Rotation sucessful");
+              this.lockState.resetLock();
+              this.tetrominoGhost.update(this.grid);
 
-    if (actionProcessor.triggered(ControlAction.ROTATE_CCW)) {
-      this.tetrominoGhost.update(this.grid);
-
-      this.didChangeOrientation = true;
+              this.didChangeOrientation = true;
+            }
+            this.logger.groupEnd();
+          }
+          break;
+      }
     }
 
     this.lockState.update(ticker);

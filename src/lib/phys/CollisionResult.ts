@@ -38,4 +38,8 @@ export default class CollisionResult {
   collidesAll(): boolean {
     return this.top && this.left && this.bottom && this.right;
   }
+
+  collidesAny(): boolean {
+    return this.top || this.left || this.bottom || this.right;
+  }
 }

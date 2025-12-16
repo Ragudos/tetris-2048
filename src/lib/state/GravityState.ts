@@ -1,8 +1,8 @@
 import type { Ticker } from "pixi.js";
 import Config from "../config/Config";
-import { ControlAction } from "../input/ActionProcessor";
 import GlobalAction from "../input/GlobalAction";
 import Scorer from "../scorer/Scorer";
+import { ControlAction } from "../input/ControlAction";
 
 export type GravityConfig =
   | { type: "none" }

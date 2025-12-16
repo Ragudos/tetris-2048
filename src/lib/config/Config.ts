@@ -1,7 +1,7 @@
 import Cloneable from "@/common/Cloneable";
 import { GRAVITY, KickDataKey, SpriteType } from "@/constants";
 import InputMap from "./InputMap";
-import { ControlAction } from "../input/ActionProcessor";
+import { ControlAction } from "../input/ControlAction";
 
 export const DEFAULT_CONFIG = Object.freeze({
   screenConfig: {
