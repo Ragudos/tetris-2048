@@ -1,7 +1,7 @@
 {
   "name": "tetris-2048",
   "version": "1.0.0",
-  "packageManager": "pnpm@10.25.0",
+  "packageManager": "pnpm@10.26.0",
   "scripts": {
     "test": "vitest",
     "build": "node esbuild.config.mjs",
@@ -11,6 +11,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.3.8",
     "esbuild": "^0.27.1",
+    "happy-dom": "^20.0.11",
     "typescript": "^5.9.3",
     "vitest": "^4.0.15"
   },

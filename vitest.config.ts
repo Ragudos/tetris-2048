@@ -7,6 +7,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export default defineConfig({
+  test: {
+    environment: "happy-dom",
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
