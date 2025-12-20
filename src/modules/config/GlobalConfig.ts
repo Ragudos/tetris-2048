@@ -39,7 +39,7 @@
  * });
  * ```
  */
-import { DeepPartial } from "@/types/DeepPartial";
+import type { DeepPartial } from "@/types/DeepPartial";
 import Config, { type ConfigSchema } from "./Config";
 
 /* -------------------------------- GlobalConfig ------------------------------- */
@@ -50,6 +50,8 @@ import Config, { type ConfigSchema } from "./Config";
  * Singleton factory for the game's global {@link Config} instance.
  * Ensures a single source of truth for configuration throughout the app.
  */
+
+// biome-ignore lint/complexity/noStaticOnlyClass: This is a global config.
 export class GlobalConfig {
   /** Singleton instance */
   private static instance: Config;
@@ -130,6 +132,8 @@ export class GlobalConfig {
    * @private
    */
   private static notify(): void {
-    GlobalConfig.listeners.forEach((cb) => cb(GlobalConfig.get()));
+    GlobalConfig.listeners.forEach((cb) => {
+      cb(GlobalConfig.get());
+    });
   }
 }

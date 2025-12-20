@@ -1,7 +1,7 @@
 import Logger from "@/modules/log/Logger";
-import InputMap, { ActionName } from "./InputMap";
-import InputState from "./InputState";
 import { GlobalConfig } from "../config/GlobalConfig";
+import InputMap, { type ActionName } from "./InputMap";
+import InputState from "./InputState";
 
 export default class Input {
   private static instance: Input;
@@ -14,12 +14,30 @@ export default class Input {
     this.input = InputMap.fromJSON(GlobalConfig.get().controls.input.map);
   }
 
-  static getInstance(): Input {
-    if (!Input.instance) {
-      Input.instance = new Input();
+  private repeatInput(inputState: InputState): boolean {
+    const config = GlobalConfig.get();
+
+    inputState.counter--;
+
+    if (inputState.counter <= 0) {
+      inputState.counter =
+        inputState.repeats > 0 ? config.controls.input.delay : config.controls.input.initialDelay;
+
+      inputState.repeats++;
+
+      return true;
     }
 
-    return Input.instance;
+    return false;
+  }
+
+  private getState(action: ActionName): InputState {
+    if (!this.states.has(action)) {
+      this.states.set(action, new InputState());
+    }
+
+    // biome-ignore lint/style/noNonNullAssertion: Already exists by the condition above
+    return this.states.get(action)!;
   }
 
   addSingleTriggerAction(action: ActionName): void {
@@ -31,70 +49,43 @@ export default class Input {
   }
 
   choose(action1: ActionName, action2: ActionName): ActionName | null {
-    const state1 = this.states.get(action1)!;
-    const state2 = this.states.get(action2)!;
+    const state1 = this.getState(action1);
+    const state2 = this.getState(action2);
     const down1 = this.input.pressed(action1);
     const down2 = this.input.pressed(action2);
 
-    if (!down1 && down2) {
-      state1.reset();
-
-      if (this.pressed(action2)) {
-        return action2;
-      }
-    } else if (down1 && !down2) {
-      state2.reset();
-
-      if (this.pressed(action1)) {
-        return action1;
-      }
-    } else if (!down1 && !down2) {
+    if (!down1 && !down2) {
       state1.reset();
       state2.reset();
 
       return null;
-    } else if (down1 && down2) {
-      const config = GlobalConfig.get();
+    }
 
-      // get the latest pressed key
-      if (state1.pressedOn < state2.pressedOn) {
-        state1.counter--;
+    if (!down1 && down2) {
+      state1.reset();
 
-        if (state1.counter <= 0) {
-          state1.counter =
-            state1.repeats > 0
-              ? config.controls.input.delay
-              : config.controls.input.initialDelay;
+      return this.pressed(action2) ? action2 : null;
+    }
 
-          state1.repeats++;
+    if (down1 && !down2) {
+      state2.reset();
 
-          return action1;
-        }
-      } else if (state1.pressedOn < state2.pressedOn) {
-        state2.counter--;
+      return this.pressed(action1) ? action1 : null;
+    }
 
-        if (state2.counter <= 0) {
-          state2.counter =
-            state2.repeats > 0
-              ? config.controls.input.delay
-              : config.controls.input.initialDelay;
+    if (state1.pressedOn < state2.pressedOn) {
+      return this.repeatInput(state1) ? action1 : null;
+    }
 
-          state2.repeats++;
-
-          return action2;
-        }
-      }
-    } else if (down1 && this.pressed(action1)) {
-      return action1;
-    } else if (down2 && this.pressed(action2)) {
-      return action2;
+    if (state2.pressedOn < state1.pressedOn) {
+      return this.repeatInput(state2) ? action2 : null;
     }
 
     return null;
   }
 
   pressed(action: ActionName): boolean {
-    const state = this.states.get(action)!;
+    const state = this.getState(action);
     const down = this.input.pressed(action);
 
     if (!down) {
@@ -115,17 +106,14 @@ export default class Input {
       return false;
     }
 
-    state.counter--;
+    return this.repeatInput(state);
+  }
 
-    if (state.counter <= 0) {
-      const config = GlobalConfig.get().controls.input;
-      state.counter = state.repeats > 0 ? config.delay : config.initialDelay;
-
-      state.repeats++;
-
-      return true;
+  static getInstance(): Input {
+    if (!Input.instance) {
+      Input.instance = new Input();
     }
 
-    return false;
+    return Input.instance;
   }
 }

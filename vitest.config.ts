@@ -1,7 +1,6 @@
-import { defineConfig } from "vitest/config";
-import path from "path";
+import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-import { dirname } from "path";
+import { defineConfig } from "vitest/config";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -18,12 +17,12 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
-      "@log": path.resolve(__dirname, "src/lib/log"),
-      "@audio": path.resolve(__dirname, "src/lib/audio"),
-      "@config": path.resolve(__dirname, "src/lib/config"),
-      "@util": path.resolve(__dirname, "src/lib/util"),
-      "@scorer": path.resolve(__dirname, "src/lib/scorer"),
-      "@renderer": path.resolve(__dirname, "src/renderer"),
+      "@input": path.resolve(__dirname, "src/modules/input"),
+      "@rendering": path.resolve(__dirname, "src/modules/rendering"),
+      "@log": path.resolve(__dirname, "src/modules/log"),
+      "@audio": path.resolve(__dirname, "src/modules/audio"),
+      "@config": path.resolve(__dirname, "src/modules/config"),
+      "@util": path.resolve(__dirname, "src/modules/util"),
     },
   },
 });

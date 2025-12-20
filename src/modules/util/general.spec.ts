@@ -8,9 +8,9 @@
  * - `mergeDefaults`: recursively merges a partial object into defaults
  */
 
-import { describe, it, expect } from "vitest";
-import { range, getErrorMsg, mergeDefaults } from "@/modules/util/general";
-import { DeepPartial } from "@/types/DeepPartial";
+import { describe, expect, it } from "vitest";
+import { getErrorMsg, mergeDefaults, range } from "@/modules/util/general";
+import type { DeepPartial } from "@/types/DeepPartial";
 
 describe("general utilities", () => {
   describe("range()", () => {
@@ -40,9 +40,7 @@ describe("general utilities", () => {
 
     it("should return a default message for unknown types", () => {
       expect(getErrorMsg(42)).toBe("Something went wrong: 42");
-      expect(getErrorMsg({ code: 500 })).toBe(
-        "Something went wrong: [object Object]"
-      );
+      expect(getErrorMsg({ code: 500 })).toBe("Something went wrong: [object Object]");
       expect(getErrorMsg(null)).toBe("Something went wrong: null");
     });
   });

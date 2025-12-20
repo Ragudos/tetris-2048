@@ -1,4 +1,4 @@
-import * as esbuild from "esbuild";
+import esbuild from "esbuild";
 
 const watch = process.argv.slice(2).at(0) === "watch";
 

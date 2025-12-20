@@ -1,12 +1,12 @@
 {
   "name": "tetris-2048",
   "version": "1.0.0",
-  "packageManager": "pnpm@10.26.0",
+  "packageManager": "pnpm@10.26.1",
   "scripts": {
     "test": "vitest",
     "build": "node esbuild.config.mjs",
     "dev": "node esbuild.config.mjs watch",
-    "format": "biome format --write"
+    "format": "biome format --write && biome lint --fix"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.8",

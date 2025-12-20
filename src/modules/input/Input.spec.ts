@@ -1,8 +1,10 @@
-import { describe, it, beforeEach, expect, vi, Mock } from "vitest";
-import Input from "./Input";
-import InputMap, { ActionName } from "./InputMap";
-import InputState from "./InputState";
+/** biome-ignore-all lint/suspicious/noExplicitAny: too lazy to refactor this test to not use any */
+
+import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { GlobalConfig } from "../config/GlobalConfig";
+import Input from "./Input";
+import InputMap, { type ActionName } from "./InputMap";
+import InputState from "./InputState";
 
 // Mock dependencies
 vi.mock("./InputMap");
@@ -57,9 +59,7 @@ describe("Input - choose method detailed tests", () => {
   });
 
   it("choose returns the pressed action if only one is pressed", () => {
-    mockInputMap.pressed.mockImplementation(
-      (action: ActionName) => action === action1
-    );
+    mockInputMap.pressed.mockImplementation((action: ActionName) => action === action1);
 
     const result = input.choose(action1, action2);
     expect(result).toBe(action1);
@@ -108,9 +108,7 @@ describe("Input - choose method detailed tests", () => {
 
   it("choose respects single-trigger logic indirectly via pressed", () => {
     input.addSingleTriggerAction(action1);
-    mockInputMap.pressed.mockImplementation(
-      (action: ActionName) => action === action1
-    );
+    mockInputMap.pressed.mockImplementation((action: ActionName) => action === action1);
 
     const state1: InputState = (input as any).states.get(action1);
     state1.counter = 0;

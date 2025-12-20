@@ -67,6 +67,7 @@ export default class Logger {
   error(...messages: string[]) {
     this.write("ERROR", messages);
 
+    // biome-ignore lint/suspicious/noDebugger: every error will be debugged
     if (!__TEST__ && __DEV__) debugger;
   }
 
@@ -96,9 +97,9 @@ export default class Logger {
     if (__TEST__) return;
 
     if (this.groupStack.length > 0) {
-      const group = this.groupStack.pop()!;
+      const group = this.groupStack.pop();
 
-      console.timeEnd(group.name);
+      console.timeEnd(group?.name);
     }
     console.groupEnd();
   }

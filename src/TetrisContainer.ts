@@ -1,4 +1,4 @@
-import { generateRandomId } from "./lib/util/string";
+import { generateRandomId } from "./modules/util/string";
 
 export default class TetrisContainer {
   private element: HTMLElement;

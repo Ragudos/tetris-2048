@@ -12,7 +12,7 @@
  * - notifies registered listeners on changes.
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import Config, { GRAVITY, WALL_KICK } from "./Config";
 import { GlobalConfig } from "./GlobalConfig";
 

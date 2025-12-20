@@ -13,9 +13,9 @@
  * suitable for both documentation and automated testing.
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
-import Config, { ConfigSchema, GRAVITY, WALL_KICK, GHOST_SKIN } from "./Config";
-import { DeepPartial } from "@/types/DeepPartial";
+import { beforeEach, describe, expect, it } from "vitest";
+import type { DeepPartial } from "@/types/DeepPartial";
+import Config, { type ConfigSchema, GHOST_SKIN, GRAVITY, WALL_KICK } from "./Config";
 
 beforeEach(() => {
   localStorage.clear();

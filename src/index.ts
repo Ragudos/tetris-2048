@@ -1,7 +1,6 @@
 import Game from "./Game";
-import Logger from "./lib/log/Logger";
-import Scorer from "./lib/scorer/Scorer";
 import { Libraries } from "./Libraries";
+import Logger from "./modules/log/Logger";
 
 window.addEventListener("DOMContentLoaded", init);
 
@@ -28,7 +27,6 @@ async function init(): Promise<void> {
   }
 
   gameContainer.appendChild(game.getTetrisContainer().getElement());
-  await Scorer.getInstance().initialize();
   await game.initialize();
 
   game.start();

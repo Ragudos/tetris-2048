@@ -14,10 +14,11 @@
  */
 
 import z from "zod";
-import { INPUT_MAP_SCHEMA } from "../input/InputMap";
 import Logger from "@/modules/log/Logger";
-import { getErrorMsg, mergeDefaults } from "../util/general";
 import type { DeepPartial } from "@/types/DeepPartial";
+import { INPUT_MAP_SCHEMA } from "../input/InputMap";
+import { ControlAction } from "../tetris/ControlAction";
+import { getErrorMsg, mergeDefaults } from "../util/general";
 
 /* --------------------------------- Enums --------------------------------- */
 
@@ -105,15 +106,30 @@ export const CONFIG_SCHEMA = z.object({
     sprites: z.object({ tetrominoType: z.string() }),
     ghost: z.object({
       enabled: z.boolean(),
-      skin: z.enum(Object.values(GHOST_SKIN) as [string, ...string[]]),
+      skin: z.enum(
+        Object.values(GHOST_SKIN) as [
+          (typeof GHOST_SKIN)[keyof typeof GHOST_SKIN],
+          ...(typeof GHOST_SKIN)[keyof typeof GHOST_SKIN][],
+        ],
+      ),
     }),
-    wallKick: z.enum(Object.values(WALL_KICK) as [string, ...string[]]),
+    wallKick: z.enum(
+      Object.values(WALL_KICK) as [
+        (typeof WALL_KICK)[keyof typeof WALL_KICK],
+        ...(typeof WALL_KICK)[keyof typeof WALL_KICK][],
+      ],
+    ),
     lock: z.object({
       enabled: z.boolean(),
       maxResets: z.number().min(0),
       delayFrames: z.number().min(0),
     }),
-    gravity: z.enum(Object.values(GRAVITY) as [string, ...string[]]),
+    gravity: z.enum(
+      Object.values(GRAVITY) as [
+        (typeof GRAVITY)[keyof typeof GRAVITY],
+        ...(typeof GRAVITY)[keyof typeof GRAVITY][],
+      ],
+    ),
   }),
   controls: z.object({
     input: z.object({
@@ -141,7 +157,10 @@ const DEFAULTS: ConfigSchema = {
     rows: 20,
     columns: 10,
     holdStage: { width: stagePixels(6, 24), height: stagePixels(6, 24) },
-    playingStage: { width: stagePixels(10, 24), height: stagePixels(20, 24) },
+    playingStage: {
+      width: stagePixels(10, 24),
+      height: stagePixels(20, 24),
+    },
     queueStage: { width: stagePixels(6, 24), height: stagePixels(20, 24) },
   },
   gameplay: {
@@ -153,11 +172,19 @@ const DEFAULTS: ConfigSchema = {
   },
   controls: {
     input: {
-      delay: 1,
-      initialDelay: 6,
+      delay: 2,
+      initialDelay: 10,
       map: {
         autoListen: true,
-        keys: {},
+        keys: {
+          [ControlAction.MOVE_LEFT]: ["ArrowLeft", "KeyA"],
+          [ControlAction.MOVE_RIGHT]: ["ArrowRight", "KeyD"],
+          [ControlAction.SOFT_DROP]: ["ArrowDown", "KeyS"],
+          [ControlAction.HARD_DROP]: ["Space"],
+          [ControlAction.ROTATE_CW]: ["ArrowUp", "KeyX"],
+          [ControlAction.ROTATE_CCW]: ["KeyZ"],
+          [ControlAction.HOLD]: ["ShiftLeft", "ShiftRight"],
+        },
         keysDown: [],
         targetId: "window",
       },
@@ -252,9 +279,14 @@ export default class Config {
 
     const stored = localStorage.getItem(Config.STORAGE_KEY);
 
-    Config.logger.info("Config loaded. Parsing...");
+    if (!stored) {
+      Config.logger.info("No stored config. Proceeding to default.");
+      Config.logger.groupEnd();
 
-    if (!stored) return new Config();
+      return new Config();
+    }
+
+    Config.logger.info("Config loaded. Parsing...");
 
     try {
       const parsed = JSON.parse(stored);

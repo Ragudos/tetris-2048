@@ -1,4 +1,4 @@
-import { beforeEach, test, expect, describe } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import InputState from "./InputState";
 
 describe("InputState", () => {

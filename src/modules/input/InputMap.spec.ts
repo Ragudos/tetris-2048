@@ -7,7 +7,7 @@
  * Each test contains explanations and examples of how the class works in practice.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import InputMap from "./InputMap";
 
 describe("InputMap", () => {
@@ -167,7 +167,7 @@ describe("InputMap", () => {
     };
 
     expect(() => InputMap.fromJSON(json)).toThrowError(
-      /InputMap target with id nonexistent does not exist/
+      "InputMap target with id nonexistent does not exist",
     );
   });
 });

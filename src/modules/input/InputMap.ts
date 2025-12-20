@@ -75,7 +75,7 @@ export default class InputMap {
     target: Window | HTMLElement = window,
     autoListen: boolean = true,
     defaultKeys?: Map<ActionName, Set<string>>,
-    defaultKeysDown?: Set<string>
+    defaultKeysDown?: Set<string>,
   ) {
     this.target = target;
     this.listening = autoListen;
@@ -219,9 +219,7 @@ export default class InputMap {
 
     return {
       autoListen: listening,
-      keys: Object.fromEntries(
-        [...this.keys.entries()].map(([key, value]) => [key, [...value]])
-      ),
+      keys: Object.fromEntries([...this.keys.entries()].map(([key, value]) => [key, [...value]])),
       keysDown: [...this.keysDown],
       targetId: this.target instanceof Window ? "window" : this.target.id,
     };
@@ -253,21 +251,14 @@ export default class InputMap {
         : document.getElementById(parseResult.data.targetId);
 
     if (!target) {
-      throw new Error(
-        `InputMap target with id ${parseResult.data.targetId} does not exist.`
-      );
+      throw new Error(`InputMap target with id ${parseResult.data.targetId} does not exist.`);
     }
 
     return new InputMap(
       target,
       parseResult.data.autoListen,
-      new Map(
-        Object.entries(parseResult.data.keys).map(([key, value]) => [
-          key,
-          new Set(value),
-        ])
-      ),
-      new Set(parseResult.data.keysDown)
+      new Map(Object.entries(parseResult.data.keys).map(([key, value]) => [key, new Set(value)])),
+      new Set(parseResult.data.keysDown),
     );
   }
 }

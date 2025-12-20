@@ -13,12 +13,13 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@log/*": ["./src/lib/log/*"],
-      "@audio/*": ["./src/lib/audio/*"],
-      "@config/*": ["./src/lib/config/*"],
-      "@util/*": ["./src/lib/util/*"],
-      "@scorer/*": ["./src/lib/scorer/*"],
-      "@renderer/*": ["./src/renderer/*"]
+      "@audio/*": ["./src/modules/audio/*"],
+      "@input/*": ["./src/modules/input/*"],
+      "@config/*": ["./src/modules/config/*"],
+      "@log/*": ["./src/modules/log/*"],
+      "@rendering/*": ["./src/modules/renderering/*"],
+      "@tetris/*": ["./src/modules/renderer/*"],
+      "@util/*": ["./src/modules/util/*"]
     }
   },
   "exclude": ["__tests__", "node_modules"]
