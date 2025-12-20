@@ -62,7 +62,9 @@ export default class GameState {
     this.logger.info("Going to next Tetromino");
 
     this.grid.occupyGrid(this.tetrominoBag.getActiveTetromino());
-    this.tetrominoBag.getActiveTetromino().changeType(this.tetrominoBag.consumeQueue());
+    this.tetrominoBag
+      .getActiveTetromino()
+      .changeType(this.tetrominoBag.consumeQueue());
     this.lockState.setLocked(false);
     this.gravityState.setRowsToOccupy(0);
     this.gravityState.setHardDrop(false);
@@ -89,8 +91,13 @@ export default class GameState {
 
     this.ghostTetrominoDirty = false;
     const activeTetromino = this.tetrominoBag.getActiveTetromino();
+    activeTetromino.actions.softDrop = false;
+    activeTetromino.actions.hardDrop = false;
 
-    if (!this.lockState.getLocked() || (this.lockState.getLocked() && this.lockState.canReset())) {
+    if (
+      !this.lockState.getLocked() ||
+      (this.lockState.getLocked() && this.lockState.canReset())
+    ) {
       const moved = activeTetromino.handleMovement(this.grid);
       const rotated = activeTetromino.handleRotation(this.grid);
 
@@ -115,15 +122,25 @@ export default class GameState {
       }
     }
 
+    if (this.gravityState.getSoftDrop()) {
+      activeTetromino.actions.softDrop = true;
+    }
+
     this.lockState.update(ticker);
 
     if (Input.getInstance().pressed(ControlAction.HARD_DROP)) {
       this.hardDrop(true);
+      activeTetromino.actions.hardDrop = true;
     } else if (!this.lockState.getLocked()) {
       this.gravityState.update(ticker);
 
       if (this.gravityState.getRowsToOccupy() >= 1) {
-        if (activeTetromino.moveDown(this.grid, this.gravityState.getRowsToOccupy())) {
+        if (
+          activeTetromino.moveDown(
+            this.grid,
+            this.gravityState.getRowsToOccupy()
+          )
+        ) {
           if (GlobalConfig.get().gameplay.lock.enabled) {
             this.lockState.setLocked(true);
           } else {

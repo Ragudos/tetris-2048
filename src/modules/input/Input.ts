@@ -21,7 +21,9 @@ export default class Input {
 
     if (inputState.counter <= 0) {
       inputState.counter =
-        inputState.repeats > 0 ? config.controls.input.delay : config.controls.input.initialDelay;
+        inputState.repeats > 0
+          ? config.controls.input.delay
+          : config.controls.input.initialDelay;
 
       inputState.repeats++;
 
@@ -82,6 +84,10 @@ export default class Input {
     }
 
     return null;
+  }
+
+  down(action: ActionName): boolean {
+    return this.input.pressed(action);
   }
 
   pressed(action: ActionName): boolean {

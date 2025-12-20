@@ -7,11 +7,13 @@ import { GRAVITY, GRAVITY_PER_MODE } from "./constants";
 export default class GravityState {
   private softDropMultiplier: number;
   private rowsToOccupy: number;
+  private softDrop: boolean;
   private hardDrop: boolean;
 
   constructor() {
     this.softDropMultiplier = 20;
     this.rowsToOccupy = 0;
+    this.softDrop = false;
     this.hardDrop = false;
   }
 
@@ -31,7 +33,7 @@ export default class GravityState {
         Math.min(
           // TODO: Level
           0,
-          GRAVITY.ROWS_PER_FRAME.length - 1,
+          GRAVITY.ROWS_PER_FRAME.length - 1
         )
       ];
 
@@ -41,6 +43,12 @@ export default class GravityState {
   update(ticker: Ticker): void {
     if (this.hardDrop) {
       return;
+    }
+
+    this.softDrop = false;
+
+    if (Input.getInstance().pressed(ControlAction.SOFT_DROP)) {
+      this.softDrop = true;
     }
 
     const base = this.getBaseGravity();
@@ -58,7 +66,7 @@ export default class GravityState {
   }
 
   getSoftDrop(): boolean {
-    return Input.getInstance().pressed(ControlAction.SOFT_DROP);
+    return this.softDrop;
   }
 
   setRowsToOccupy(value: number): void {

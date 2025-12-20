@@ -12,7 +12,12 @@ import Logger from "../log/Logger";
 import { rotateMatrix } from "../util/matrix";
 import { ControlAction } from "./ControlAction";
 import type GameGrid from "./GameGrid";
-import { collides, collidesBottom, collidesLeft, collidesRight } from "./physics/collisions";
+import {
+  collides,
+  collidesBottom,
+  collidesLeft,
+  collidesRight,
+} from "./physics/collisions";
 import Offsets from "./physics/Offsets";
 
 export default class Tetromino {
@@ -24,10 +29,21 @@ export default class Tetromino {
   private currentRotation: number;
   private position: Point;
   private shape: number[][];
+  actions = {
+    collidingRight: false,
+    collidingLeft: false,
+    hardDrop: false,
+    softDrop: false,
+  };
 
   private dirty: boolean;
 
-  constructor(name: TetrominoNames, currentRotation: number, position: Point, shape: number[][]) {
+  constructor(
+    name: TetrominoNames,
+    currentRotation: number,
+    position: Point,
+    shape: number[][]
+  ) {
     this.logger = Logger.createLogger(Tetromino.name);
     this.name = name;
     this.currentRotation = currentRotation;
@@ -74,7 +90,8 @@ export default class Tetromino {
     rotateMatrix(rotation, this.shape);
 
     this.currentRotation =
-      (Math.abs(this.currentRotation + rotation) % MAX_TETROMINO_ROTATIONS) * rotation;
+      (Math.abs(this.currentRotation + rotation) % MAX_TETROMINO_ROTATIONS) *
+      rotation;
 
     this.dirty = true;
   }
@@ -86,8 +103,26 @@ export default class Tetromino {
    */
   handleMovement(grid: GameGrid): boolean {
     const actionProcessor = Input.getInstance();
+    this.actions.collidingLeft = false;
+    this.actions.collidingRight = false;
 
-    switch (actionProcessor.choose(ControlAction.MOVE_LEFT, ControlAction.MOVE_RIGHT)) {
+    if (
+      actionProcessor.down(ControlAction.MOVE_LEFT) &&
+      collidesLeft(grid, this.position, this.shape, 1)
+    ) {
+      this.actions.collidingLeft = true;
+    }
+
+    if (
+      actionProcessor.down(ControlAction.MOVE_RIGHT) &&
+      collidesRight(grid, this.position, this.shape, 1)
+    ) {
+      this.actions.collidingRight = true;
+    }
+
+    switch (
+      actionProcessor.choose(ControlAction.MOVE_LEFT, ControlAction.MOVE_RIGHT)
+    ) {
       case ControlAction.MOVE_LEFT: {
         if (collidesLeft(grid, this.position, this.shape, 1)) {
           return false;
@@ -119,7 +154,9 @@ export default class Tetromino {
     const tmpShape = this.shape.map((val) => [...val]);
     const absNextRotation = Math.abs(this.currentRotation + rotationDir) % 4;
     const kickIdx =
-      rotationDir === ROTATION.COUNTER_CLOCKWISE ? absNextRotation + 4 : absNextRotation;
+      rotationDir === ROTATION.COUNTER_CLOCKWISE
+        ? absNextRotation + 4
+        : absNextRotation;
 
     rotateMatrix(rotationDir, tmpShape);
 
@@ -127,9 +164,19 @@ export default class Tetromino {
 
     for (let kick = 0; kick < arr[kickIdx].length; ++kick) {
       const [dx, dy] = arr[kickIdx][kick];
-      const newPoint = new Point(this.position.getX() + dx, this.position.getY() + dy);
+      const newPoint = new Point(
+        this.position.getX() + dx,
+        this.position.getY() + dy
+      );
 
-      if (collides(grid, newPoint, tmpShape, new Offsets(0, 0, 0, 0)).collidesAny()) {
+      if (
+        collides(
+          grid,
+          newPoint,
+          tmpShape,
+          new Offsets(0, 0, 0, 0)
+        ).collidesAny()
+      ) {
         continue;
       }
 
