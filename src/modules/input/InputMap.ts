@@ -31,20 +31,20 @@
 import z from "zod";
 
 /**
- * @description Represents the name of an action that can be mapped to one or more keyboard keys.
- */
-export type ActionName = string;
-
-/**
  * @description Schema used for serializing and deserializing InputMap objects.
  * Ensures that JSON data passed to `fromJSON` has the correct structure.
  */
-const schema = z.object({
+export const INPUT_MAP_SCHEMA = z.object({
   autoListen: z.boolean(),
   keys: z.record(z.string(), z.array(z.string())),
   keysDown: z.array(z.string()),
   targetId: z.string(),
 });
+
+/**
+ * @description Represents the name of an action that can be mapped to one or more keyboard keys.
+ */
+export type ActionName = string;
 
 /**
  * @class InputMap
@@ -55,8 +55,8 @@ export default class InputMap {
   private listening: boolean;
   private keys: Map<ActionName, Set<string>>;
   private keysDown: Set<string>;
-  private keydownListener: typeof this.onKeyUp;
-  private keyupListener: typeof this.onKeyDown;
+  private keydownListener: typeof this.onKeyUp = this.onKeyDown.bind(this);
+  private keyupListener: typeof this.onKeyDown = this.onKeyUp.bind(this);
 
   /**
    * @constructor
@@ -81,8 +81,6 @@ export default class InputMap {
     this.listening = autoListen;
     this.keys = defaultKeys ? defaultKeys : new Map();
     this.keysDown = defaultKeysDown ? defaultKeysDown : new Set();
-    this.keydownListener = this.onKeyDown.bind(this);
-    this.keyupListener = this.onKeyUp.bind(this);
 
     if (autoListen) {
       target.addEventListener("keydown", this.keydownListener);
@@ -212,7 +210,7 @@ export default class InputMap {
    * console.log(json.keysDown); // ['KeyA']
    * ```
    */
-  toJSON(shouldDestroy: boolean = false): z.infer<typeof schema> {
+  toJSON(shouldDestroy: boolean = false): z.infer<typeof INPUT_MAP_SCHEMA> {
     const listening = this.listening;
 
     if (shouldDestroy) {
@@ -243,7 +241,7 @@ export default class InputMap {
    * ```
    */
   static fromJSON(obj: unknown): InputMap {
-    const parseResult = schema.safeParse(obj);
+    const parseResult = INPUT_MAP_SCHEMA.safeParse(obj);
 
     if (parseResult.error) {
       throw parseResult.error;

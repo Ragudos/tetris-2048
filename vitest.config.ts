@@ -9,6 +9,11 @@ const __dirname = dirname(__filename);
 export default defineConfig({
   test: {
     environment: "happy-dom",
+    globals: true,
+  },
+  define: {
+    __DEV__: true,
+    __TEST__: true,
   },
   resolve: {
     alias: {

@@ -13,6 +13,10 @@ const config = {
   sourcemap: "external",
   outdir: "dist",
   entryPoints: ["src/index.ts"],
+  define: {
+    __DEV__: watch + "",
+    __TEST__: "false",
+  },
 };
 
 if (watch) {

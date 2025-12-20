@@ -1,5 +1,5 @@
 /**
- * @file InputMap.test.ts
+ * @file InputMap.spec.ts
  * @module src/modules/input/InputMap.test
  * @description
  * Vitest test suite for the InputMap class.
