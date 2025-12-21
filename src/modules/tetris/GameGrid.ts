@@ -1,7 +1,6 @@
 import Point from "@/modules/tetris/common/Point";
 import type Tetromino from "./Tetromino";
 import type { TetrominoNames } from "./constants";
-import { is } from "zod/locales";
 
 export default class GameGrid {
   private rows: number;

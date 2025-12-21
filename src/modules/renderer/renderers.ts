@@ -1,4 +1,10 @@
-import type { Container, Sprite } from "pixi.js";
+import {
+  Color,
+  ColorMatrixFilter,
+  type Container,
+  type Sprite,
+  type Ticker,
+} from "pixi.js";
 import { Libraries } from "@/Libraries";
 import { GlobalConfig } from "../config/GlobalConfig";
 import Logger from "../log/Logger";
@@ -11,6 +17,12 @@ import { getPointFrom1D } from "../util/general";
 import type { IRenderer, ISkin, IView } from "./interfaces";
 import { GenericView } from "./views";
 import { SPRITE_NAMES, TETROMINO_SHAPES } from "../tetris/constants";
+import { getTimeEaseOut } from "../util/animations";
+
+function applyDarken(filter: ColorMatrixFilter, strength: number) {
+  filter.reset();
+  filter.brightness(strength, false);
+}
 
 export abstract class GenericRenderer<TState, TContent>
   implements IRenderer<TState>
@@ -40,7 +52,7 @@ export abstract class GenericRenderer<TState, TContent>
   }
 
   abstract initialize(): void;
-  abstract render(state: TState): void;
+  abstract render(ticker: Ticker, state: TState): void;
 
   destroy(): void {
     this.container.destroy({ children: true });
@@ -75,7 +87,7 @@ export class HoldRenderer extends GenericRenderer<HoldState, Sprite> {
     }
   }
 
-  render(state: HoldState): void {
+  render(ticker: Ticker, state: HoldState): void {
     if (!state.heldDirty || !state.heldTetrominoName) {
       return;
     }
@@ -208,6 +220,7 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
           width: blockSize,
           height: blockSize,
           texture: Libraries.getPIXI().Texture.EMPTY,
+          filters: [new ColorMatrixFilter()],
         })
       );
     }
@@ -342,29 +355,80 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
   private lockAnimTime = 0;
   private isLockingAnimating = false;
 
-  private startLockingAnimation(state: PlayfieldState): void {
-    if (this.isLockingAnimating) {
-    } else {
-      this.isLockingAnimating = true;
+  private startLockingAnimation(ticker: Ticker, state: PlayfieldState): void {
+    this.isLockingAnimating = true;
+    this.lockAnimTime += ticker.deltaTime;
+
+    const shape = state.activeTetromino!.getShape();
+    const spriteType = GlobalConfig.get().gameplay.sprites
+      .tetrominoType as keyof typeof SPRITE_NAMES;
+    let counter = 0;
+
+    const fraction = Math.max(
+      1 -
+        (ticker.deltaTime - this.lockAnimTime) /
+          (GlobalConfig.get().gameplay.lock.delayFrames * 2),
+      0.75
+    );
+    const newAlpha = getTimeEaseOut(fraction);
+
+    console.log(fraction, newAlpha);
+
+    if (spriteType === "background") {
+      return;
+    }
+
+    for (let y = 0; y < shape.length; ++y) {
+      for (let x = 0; x < shape[y].length; ++x) {
+        if (!shape[y][x]) {
+          continue;
+        }
+
+        const sprite = this.activeLayer.getChildAt(counter++) as Sprite;
+
+        applyDarken(sprite.filters[0] as ColorMatrixFilter, newAlpha);
+      }
     }
   }
 
-  private cancelLockingAnimation(): void {
+  private cancelLockingAnimation(ticker: Ticker, state: PlayfieldState): void {
     if (this.isLockingAnimating) {
-      this.isLockingAnimating = false;
+      const shape = state.activeTetromino!.getShape();
+      const spriteType = GlobalConfig.get().gameplay.sprites
+        .tetrominoType as keyof typeof SPRITE_NAMES;
+      let counter = 0;
+
+      if (spriteType === "background") {
+        return;
+      }
+
+      for (let y = 0; y < shape.length; ++y) {
+        for (let x = 0; x < shape[y].length; ++x) {
+          if (!shape[y][x]) {
+            continue;
+          }
+
+          const sprite = this.activeLayer.getChildAt(counter++) as Sprite;
+
+          applyDarken(sprite.filters[0] as ColorMatrixFilter, 1);
+        }
+      }
     }
+
+    this.isLockingAnimating = false;
+    this.lockAnimTime = 0;
   }
 
-  render(state: PlayfieldState): void {
+  render(ticker: Ticker, state: PlayfieldState): void {
     if (state.lockedDirty) this.renderLockedLayer(state);
     if (state.ghostDirty) this.renderGhostLayer(state);
     if (state.activeDirty) this.renderActiveLayer(state);
     if (state.overflowDirty) this.renderOverflowLayer(state);
 
     if (state.locking) {
-      this.startLockingAnimation(state);
+      this.startLockingAnimation(ticker, state);
     } else {
-      this.cancelLockingAnimation();
+      this.cancelLockingAnimation(ticker, state);
     }
   }
 }

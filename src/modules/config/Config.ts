@@ -109,15 +109,15 @@ export const CONFIG_SCHEMA = z.object({
       skin: z.enum(
         Object.values(GHOST_SKIN) as [
           (typeof GHOST_SKIN)[keyof typeof GHOST_SKIN],
-          ...(typeof GHOST_SKIN)[keyof typeof GHOST_SKIN][],
-        ],
+          ...(typeof GHOST_SKIN)[keyof typeof GHOST_SKIN][]
+        ]
       ),
     }),
     wallKick: z.enum(
       Object.values(WALL_KICK) as [
         (typeof WALL_KICK)[keyof typeof WALL_KICK],
-        ...(typeof WALL_KICK)[keyof typeof WALL_KICK][],
-      ],
+        ...(typeof WALL_KICK)[keyof typeof WALL_KICK][]
+      ]
     ),
     lock: z.object({
       enabled: z.boolean(),
@@ -127,8 +127,8 @@ export const CONFIG_SCHEMA = z.object({
     gravity: z.enum(
       Object.values(GRAVITY) as [
         (typeof GRAVITY)[keyof typeof GRAVITY],
-        ...(typeof GRAVITY)[keyof typeof GRAVITY][],
-      ],
+        ...(typeof GRAVITY)[keyof typeof GRAVITY][]
+      ]
     ),
   }),
   controls: z.object({
@@ -172,8 +172,8 @@ const DEFAULTS: ConfigSchema = {
   },
   controls: {
     input: {
-      delay: 2,
-      initialDelay: 10,
+      delay: 1,
+      initialDelay: 6,
       map: {
         autoListen: true,
         keys: {

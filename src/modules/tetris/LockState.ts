@@ -52,7 +52,9 @@ export default class LockState {
   }
 
   getLockExpired(): boolean {
-    return this.timeSinceLockDelay >= GlobalConfig.get().gameplay.lock.delayFrames;
+    return (
+      this.timeSinceLockDelay >= GlobalConfig.get().gameplay.lock.delayFrames
+    );
   }
 
   getTimeSinceLockDelay(): number {

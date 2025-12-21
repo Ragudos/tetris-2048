@@ -1,4 +1,4 @@
-import { TetrominoNames } from "../constants";
+import type { TetrominoNames } from "../constants";
 import type GameState from "../GameState";
 import { collidesBottom } from "../physics/collisions";
 import PlayfieldState from "../PlayfieldState";

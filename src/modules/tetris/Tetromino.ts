@@ -71,6 +71,10 @@ export default class Tetromino {
       amount -= 1;
     }
 
+    if (collidesBottom(grid, this.position, this.shape, 1)) {
+      return true;
+    }
+
     return false;
   }
 

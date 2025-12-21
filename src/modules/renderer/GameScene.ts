@@ -89,7 +89,7 @@ export default class GameScene {
     this.playfieldRenderer.initialize();
     this.logger.groupEnd();
   }
-  render(_ticker: Ticker, state: GameState): void {
+  render(ticker: Ticker, state: GameState): void {
     const actions = state.getActiveTetromino().actions;
 
     if (actions.collidingRight) {
@@ -106,13 +106,17 @@ export default class GameScene {
       this.wallShake.addImpulse("y", 0.8);
     }
 
-    this.wallShake.update(_ticker.deltaTime);
-    this.wallShake.apply(this.layoutContainer.getContainer());
+    this.wallShake.update(ticker.deltaTime);
 
     this.playfieldRenderer.render(
+      ticker,
       this.playfieldRenderer.getSelector().select(state)
     );
-    this.holdRenderer.render(this.holdRenderer.getSelector().select(state));
+    this.holdRenderer.render(
+      ticker,
+      this.holdRenderer.getSelector().select(state)
+    );
+    this.wallShake.apply(this.layoutContainer.getContainer());
   }
 
   resize(sw: number, sh: number): void {

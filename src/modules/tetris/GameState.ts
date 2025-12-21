@@ -10,6 +10,7 @@ import LockState from "./LockState";
 import type Tetromino from "./Tetromino";
 import TetrominoBag from "./TetrominoBag";
 import type { TetrominoNames } from "./constants";
+import { collidesBottom } from "./physics/collisions";
 
 export default class GameState {
   private logger: Logger;
@@ -66,6 +67,25 @@ export default class GameState {
     const activeTetromino = this.tetrominoBag.getActiveTetromino();
     activeTetromino.actions.softDrop = false;
     activeTetromino.actions.hardDrop = false;
+
+    if (!this.lockState.getLocked()) {
+      if (
+        collidesBottom(
+          this.grid,
+          activeTetromino.getPosition(),
+          activeTetromino.getShape(),
+          1
+        )
+      ) {
+        if (GlobalConfig.get().gameplay.lock.enabled) {
+          this.lockState.setLocked(true);
+        } else {
+          this.nextTetromino();
+        }
+
+        return;
+      }
+    }
 
     if (
       !this.lockState.getLocked() ||

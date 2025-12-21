@@ -1,8 +1,8 @@
-import type { Container, Sprite, Text } from "pixi.js";
+import type { Container, Sprite, Text, Ticker } from "pixi.js";
 import type ISelector from "../../modules/tetris/selectors/ISelector";
 
 export interface IRenderer<TState> {
-  render(state: TState): void;
+  render(ticker: Ticker, state: TState): void;
   destroy(): void;
   getContainer(): Container;
   getSelector(): ISelector<TState>;
