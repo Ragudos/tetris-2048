@@ -50,7 +50,8 @@ export default class Logger {
     const head = this.header(level);
 
     messages.forEach((m) => {
-      console.groupCollapsed(`${head} - ${m}`);
+      console.groupCollapsed(head);
+      console[level.toLowerCase() as "info" | "warn" | "error"](m);
       console.trace();
       console.groupEnd();
     });
