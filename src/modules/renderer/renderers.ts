@@ -1,5 +1,4 @@
 import type { Container, Sprite } from "pixi.js";
-import { SPRITE_NAMES, TETROMINO_SHAPES } from "@/constants";
 import { Libraries } from "@/Libraries";
 import { GlobalConfig } from "../config/GlobalConfig";
 import Logger from "../log/Logger";
@@ -11,13 +10,20 @@ import PlayfieldStateSelector from "../tetris/selectors/PlayfieldStateSelector";
 import { getPointFrom1D } from "../util/general";
 import type { IRenderer, ISkin, IView } from "./interfaces";
 import { GenericView } from "./views";
+import { SPRITE_NAMES, TETROMINO_SHAPES } from "../tetris/constants";
 
-export abstract class GenericRenderer<TState, TContent> implements IRenderer<TState> {
+export abstract class GenericRenderer<TState, TContent>
+  implements IRenderer<TState>
+{
   protected container: Container;
   protected view: IView<TContent>;
   protected selector: ISelector<TState>;
 
-  constructor(parent: Container, view: IView<TContent>, selector: ISelector<TState>) {
+  constructor(
+    parent: Container,
+    view: IView<TContent>,
+    selector: ISelector<TState>
+  ) {
     this.container = new (Libraries.getPIXI().Container)({ parent });
     this.view = view;
     this.selector = selector;
@@ -49,9 +55,9 @@ export class HoldRenderer extends GenericRenderer<HoldState, Sprite> {
         skin,
         GlobalConfig.get().sizes.blockSize * 5,
         GlobalConfig.get().sizes.blockSize * 4,
-        "HOLD",
+        "HOLD"
       ),
-      new HoldStateSelector(),
+      new HoldStateSelector()
     );
   }
 
@@ -78,7 +84,9 @@ export class HoldRenderer extends GenericRenderer<HoldState, Sprite> {
     const shape = TETROMINO_SHAPES[state.heldTetrominoName];
     const spriteName =
       // @ts-expect-error
-      SPRITE_NAMES[GlobalConfig.get().gameplay.sprites.tetrominoType][state.heldTetrominoName];
+      SPRITE_NAMES[GlobalConfig.get().gameplay.sprites.tetrominoType][
+        state.heldTetrominoName
+      ];
 
     const rows = shape.length;
     const cols = shape[0].length;
@@ -95,23 +103,28 @@ export class HoldRenderer extends GenericRenderer<HoldState, Sprite> {
         if (state.heldTetrominoName === "I") {
           sprite.pivot.set(
             cols * (this.container.width / blockSize) * -0.5,
-            rows * (this.container.height / blockSize) * -1,
+            rows * (this.container.height / blockSize) * -1
           );
         } else if (state.heldTetrominoName === "O") {
           sprite.pivot.set(
             cols * (this.container.width / blockSize) * -1 * 3,
-            rows * (this.container.height / blockSize) * -1 * 3.35,
+            rows * (this.container.height / blockSize) * -1 * 3.35
           );
         } else {
           sprite.pivot.set(
             cols * (this.container.width / blockSize) * -1 * 1.25,
-            rows * (this.container.height / blockSize) * -1 * 2.25,
+            rows * (this.container.height / blockSize) * -1 * 2.25
           );
         }
 
-        sprite.position.set(Math.round(x * blockSize), Math.round(y * blockSize));
+        sprite.position.set(
+          Math.round(x * blockSize),
+          Math.round(y * blockSize)
+        );
 
-        (this.view as GenericView<Sprite, HoldState>).getSkin().applyContentStyle?.(sprite, state);
+        (this.view as GenericView<Sprite, HoldState>)
+          .getSkin()
+          .applyContentStyle?.(sprite, state);
       }
     }
   }
@@ -133,9 +146,9 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
         skin,
         GlobalConfig.get().sizes.playingStage.width,
         GlobalConfig.get().sizes.playingStage.height,
-        "STAGE",
+        "STAGE"
       ),
-      new PlayfieldStateSelector(),
+      new PlayfieldStateSelector()
     );
 
     const PIXI = Libraries.getPIXI();
@@ -156,7 +169,7 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
       this.overflowLayer,
       this.lockedLayer,
       this.ghostLayer,
-      this.activeLayer,
+      this.activeLayer
     );
   }
 
@@ -180,7 +193,7 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
           width: blockSize,
           height: blockSize,
           texture: Libraries.getPIXI().Cache.get(SPRITE_NAMES.background),
-        }),
+        })
       );
     }
 
@@ -195,13 +208,16 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
           width: blockSize,
           height: blockSize,
           texture: Libraries.getPIXI().Texture.EMPTY,
-        }),
+        })
       );
     }
 
     // ghost
     const sprite =
-      SPRITE_NAMES[GlobalConfig.get().gameplay.sprites.tetrominoType as keyof typeof SPRITE_NAMES];
+      SPRITE_NAMES[
+        GlobalConfig.get().gameplay.sprites
+          .tetrominoType as keyof typeof SPRITE_NAMES
+      ];
 
     if (sprite === "background") {
       this.logger.warn("SpriteType became background");
@@ -227,7 +243,7 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
           height: blockSize,
           texture: Libraries.getPIXI().Cache.get(val.GHOST),
           alpha: 0.87,
-        }),
+        })
       );
     }
 
@@ -245,7 +261,7 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
           height: blockSize,
           texture: Libraries.getPIXI().Texture.EMPTY,
           alpha: 0.97,
-        }),
+        })
       );
     }
   }
@@ -261,30 +277,29 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
     for (let i = 20; i < state.grid.length; ++i) {
       const name = state.grid[i];
 
-      if (!name) {
-        continue;
-      }
-
       const sprite = this.lockedLayer.getChildAt(i - 20) as Sprite;
-      sprite.texture = Libraries.getPIXI().Cache.get(SPRITE_NAMES[spriteType][name]);
+      sprite.texture = name
+        ? Libraries.getPIXI().Cache.get(SPRITE_NAMES[spriteType][name])
+        : Libraries.getPIXI().Texture.EMPTY;
     }
   }
 
   private renderGhostLayer(state: PlayfieldState): void {
     const blockSize = GlobalConfig.get().sizes.blockSize;
     let counter = 0;
+    const shape = state.activeTetromino!.getShape();
 
-    for (let y = 0; y < state.ghostPositions.shape.length; ++y) {
-      for (let x = 0; x < state.ghostPositions.shape[y].length; ++x) {
-        if (!state.ghostPositions.shape[y][x]) {
+    for (let y = 0; y < shape.length; ++y) {
+      for (let x = 0; x < shape[y].length; ++x) {
+        if (!shape[y][x]) {
           continue;
         }
 
         const sprite = this.ghostLayer.getChildAt(counter++) as Sprite;
 
         sprite.position.set(
-          (x + state.ghostPositions.x) * blockSize,
-          (-2 + (y + state.ghostPositions.y)) * blockSize,
+          (x + state.activeTetromino!.getPosition().getX()) * blockSize,
+          (-2 + (y + state.ghostY)) * blockSize
         );
       }
     }
@@ -310,11 +325,13 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
         }
 
         const sprite = this.activeLayer.getChildAt(counter++) as Sprite;
-        sprite.texture = Libraries.getPIXI().Cache.get(SPRITE_NAMES[spriteType][name]);
+        sprite.texture = Libraries.getPIXI().Cache.get(
+          SPRITE_NAMES[spriteType][name]
+        );
 
         sprite.position.set(
           (x + position!.getX()) * blockSize,
-          (-2 + (y + position!.getY())) * blockSize,
+          (-2 + (y + position!.getY())) * blockSize
         );
       }
     }

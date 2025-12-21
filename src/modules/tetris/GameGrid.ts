@@ -1,6 +1,7 @@
-import type { TetrominoNames } from "@/constants";
 import Point from "@/modules/tetris/common/Point";
 import type Tetromino from "./Tetromino";
+import type { TetrominoNames } from "./constants";
+import { is } from "zod/locales";
 
 export default class GameGrid {
   private rows: number;
@@ -38,8 +39,37 @@ export default class GameGrid {
           continue;
         }
 
-        this.value[this.get1DIndexFromCoords(x + position.getX(), y + position.getY())] =
-          tetromino.getName();
+        this.value[
+          this.get1DIndexFromCoords(x + position.getX(), y + position.getY())
+        ] = tetromino.getName();
+      }
+    }
+
+    this.dirty = true;
+  }
+
+  clearFullRows(): void {
+    for (let y = 0; y < this.rows; ++y) {
+      let isFull = true;
+
+      for (let x = 0; x < this.columns; ++x) {
+        const i = this.get1DIndexFromCoords(x, y);
+
+        if (!this.value[i]) {
+          isFull = false;
+        }
+      }
+
+      if (isFull) {
+        console.log(y);
+        for (let sy = y; sy >= 0; --sy) {
+          for (let x = 0; x < this.columns; ++x) {
+            const i = this.get1DIndexFromCoords(x, sy);
+            const i2 = this.get1DIndexFromCoords(x, sy - 1);
+
+            this.value[i] = this.value[i2];
+          }
+        }
       }
     }
 

@@ -1,8 +1,8 @@
-import { TETROMINO_NAMES, TETROMINO_SHAPES, type TetrominoNames } from "@/constants";
 import Logger from "@/modules/log/Logger";
 import Point from "@/modules/tetris/common/Point";
 import LinkedList from "@/modules/util/ds/LinkedList";
 import Tetromino from "./Tetromino";
+import { TETROMINO_NAMES, TETROMINO_SHAPES, TetrominoNames } from "./constants";
 /**
  *
  * use names to limit object creation,
@@ -48,7 +48,7 @@ export default class TetrominoBag {
       name,
       0,
       new Point(3, 0),
-      TETROMINO_SHAPES[name].map((val) => [...val]),
+      TETROMINO_SHAPES[name].map((val) => [...val])
     );
     this.canSwap = true;
     this.heldTetrominoDirty = true;

@@ -1,5 +1,5 @@
-import { ROTATION, type Rotation } from "@/constants";
 import Logger from "@/modules/log/Logger";
+import { ROTATION, Rotation } from "../tetris/constants";
 
 const logger = Logger.createLogger("MatrixUtils");
 

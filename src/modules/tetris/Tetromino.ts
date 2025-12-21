@@ -1,11 +1,3 @@
-import {
-  MAX_TETROMINO_ROTATIONS,
-  ROTATION,
-  type Rotation,
-  TETROMINO_SHAPES,
-  type TetrominoNames,
-  WALL_KICKS,
-} from "@/constants";
 import Point from "@/modules/tetris/common/Point";
 import Input from "../input/Input";
 import Logger from "../log/Logger";
@@ -19,6 +11,14 @@ import {
   collidesRight,
 } from "./physics/collisions";
 import Offsets from "./physics/Offsets";
+import {
+  MAX_TETROMINO_ROTATIONS,
+  ROTATION,
+  Rotation,
+  TETROMINO_SHAPES,
+  TetrominoNames,
+  WALL_KICKS,
+} from "./constants";
 
 export default class Tetromino {
   private logger: Logger;
@@ -254,6 +254,10 @@ export default class Tetromino {
     return this.currentRotation;
   }
 
+  /**
+   *
+   * @returns cloned position
+   */
   getPosition(): Point {
     return this.position.clone();
   }

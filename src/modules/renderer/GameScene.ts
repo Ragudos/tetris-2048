@@ -5,13 +5,6 @@ import type GameState from "../../modules/tetris/GameState";
 import HStack from "../layout/HStack";
 import { HoldRenderer, PlayfieldRenderer } from "./renderers";
 import { PlayfieldBorderSkin, SlantedHoldSkin } from "./skins";
-type ShakeAxis = "x" | "y";
-
-interface ShakeImpulse {
-  axis: ShakeAxis;
-  strength: number;
-  decay: number;
-}
 
 export class WallShake {
   offsetX = 0;

@@ -10,7 +10,6 @@ async function init(): Promise<void> {
   logger.groupCollapsed("Loading Libraries", "Loading necessary libraries");
   await Libraries.importZOD();
   await Libraries.importPIXI();
-  await Libraries.importPIXI_SETTINGS();
   logger.groupEnd();
   logger.groupCollapsed("Loading Assets", "Loading necessary assets");
   logger.info("Loading spritesheet");

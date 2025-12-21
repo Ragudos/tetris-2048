@@ -1,9 +1,9 @@
-import type { TetrominoNames } from "@/constants";
+import { TetrominoNames } from "./constants";
 
 export default class HoldState {
   constructor(
     readonly heldDirty: boolean,
     readonly canSwap: boolean,
-    readonly heldTetrominoName: TetrominoNames | undefined,
+    readonly heldTetrominoName: TetrominoNames | undefined
   ) {}
 }

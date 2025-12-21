@@ -1,5 +1,4 @@
 import type { Ticker } from "pixi.js";
-import type { TetrominoNames } from "@/constants";
 import Logger from "@/modules/log/Logger";
 import type LinkedList from "@/modules/util/ds/LinkedList";
 import { GlobalConfig } from "../config/GlobalConfig";
@@ -8,15 +7,13 @@ import { ControlAction } from "./ControlAction";
 import GameGrid from "./GameGrid";
 import GravityState from "./GravityState";
 import LockState from "./LockState";
-import { collidesBottom } from "./physics/collisions";
 import type Tetromino from "./Tetromino";
 import TetrominoBag from "./TetrominoBag";
+import type { TetrominoNames } from "./constants";
 
 export default class GameState {
   private logger: Logger;
   private tetrominoBag: TetrominoBag;
-  private ghostTetrominoData: { y: number; x: number; shape: number[][] };
-  private ghostTetrominoDirty: boolean;
   private grid: GameGrid;
   private lockState: LockState;
   private gravityState: GravityState;
@@ -27,8 +24,6 @@ export default class GameState {
 
     this.tetrominoBag = new TetrominoBag();
     this.grid = new GameGrid(config.sizes.rows + 2, config.sizes.columns);
-    this.ghostTetrominoData = this.calculateGhostTetominoPosition();
-    this.ghostTetrominoDirty = true;
 
     this.lockState = new LockState();
     this.gravityState = new GravityState();
@@ -37,25 +32,6 @@ export default class GameState {
     Input.getInstance().addSingleTriggerAction(ControlAction.ROTATE_CW);
     Input.getInstance().addSingleTriggerAction(ControlAction.ROTATE_CCW);
     Input.getInstance().addSingleTriggerAction(ControlAction.HOLD);
-  }
-
-  private calculateGhostTetominoPosition(): {
-    y: number;
-    x: number;
-    shape: number[][];
-  } {
-    const tmpPos = this.tetrominoBag.getActiveTetromino().getPosition();
-    const shape = this.tetrominoBag.getActiveTetromino().getShape();
-
-    while (!collidesBottom(this.grid, tmpPos, shape, 1)) {
-      tmpPos.setY(tmpPos.getY() + 1);
-    }
-
-    return {
-      x: tmpPos.getX(),
-      y: tmpPos.getY(),
-      shape,
-    };
   }
 
   private nextTetromino(): void {
@@ -69,10 +45,8 @@ export default class GameState {
     this.gravityState.setRowsToOccupy(0);
     this.gravityState.setHardDrop(false);
 
-    this.ghostTetrominoData = this.calculateGhostTetominoPosition();
-    this.ghostTetrominoDirty = true;
-
     // clear rows
+    this.grid.clearFullRows();
   }
 
   hardDrop(lock: boolean = true): void {
@@ -89,7 +63,6 @@ export default class GameState {
     this.tetrominoBag.resetDirty();
     this.grid.resetDirty();
 
-    this.ghostTetrominoDirty = false;
     const activeTetromino = this.tetrominoBag.getActiveTetromino();
     activeTetromino.actions.softDrop = false;
     activeTetromino.actions.hardDrop = false;
@@ -103,9 +76,6 @@ export default class GameState {
 
       if (rotated || moved) {
         this.lockState.resetLock();
-
-        this.ghostTetrominoData = this.calculateGhostTetominoPosition();
-        this.ghostTetrominoDirty = true;
       }
 
       if (Input.getInstance().pressed(ControlAction.HOLD)) {
@@ -113,9 +83,6 @@ export default class GameState {
           this.lockState.setLocked(false);
           this.gravityState.setRowsToOccupy(0);
           this.gravityState.setHardDrop(false);
-
-          this.ghostTetrominoData = this.calculateGhostTetominoPosition();
-          this.ghostTetrominoDirty = true;
 
           return;
         }
@@ -182,25 +149,12 @@ export default class GameState {
   getActiveTetromino(): Tetromino {
     return this.tetrominoBag.getActiveTetromino();
   }
-
-  getGhostTetrominoDirty(): boolean {
-    return this.ghostTetrominoDirty;
-  }
-
   getLockedDirty(): boolean {
     return this.grid.getDirty();
   }
 
-  getGrid(): (TetrominoNames | undefined)[] {
-    return this.grid.getValue().map((val) => val);
-  }
-
-  getGhostTetrominoData(): {
-    y: number;
-    x: number;
-    shape: number[][];
-  } {
-    return this.ghostTetrominoData;
+  getGrid(): GameGrid {
+    return this.grid;
   }
 
   getLocking(): boolean {
