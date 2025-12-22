@@ -108,6 +108,7 @@ export default class GameScene {
 
     this.wallShake.update(ticker.deltaTime);
 
+    this.wallShake.apply(this.layoutContainer.getContainer());
     this.playfieldRenderer.render(
       ticker,
       this.playfieldRenderer.getSelector().select(state)
@@ -116,7 +117,6 @@ export default class GameScene {
       ticker,
       this.holdRenderer.getSelector().select(state)
     );
-    this.wallShake.apply(this.layoutContainer.getContainer());
   }
 
   resize(sw: number, sh: number): void {

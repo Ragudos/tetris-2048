@@ -127,7 +127,7 @@ export default class Logger {
     if (!this.supportGroup()) {
       console.log(h.format, ...h.styles, "\nGROUP: {");
     } else {
-      console.group(h.format, ...h.styles);
+      console.groupCollapsed(h.format, ...h.styles);
     }
 
     this.groupStack.push({ name });
