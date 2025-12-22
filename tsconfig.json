@@ -1,26 +1,49 @@
 {
-  "compilerOptions": {
-    "target": "ES2017",
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"],
-      "@audio/*": ["./src/modules/audio/*"],
-      "@input/*": ["./src/modules/input/*"],
-      "@config/*": ["./src/modules/config/*"],
-      "@log/*": ["./src/modules/log/*"],
-      "@rendering/*": ["./src/modules/renderering/*"],
-      "@tetris/*": ["./src/modules/renderer/*"],
-      "@util/*": ["./src/modules/util/*"]
-    }
-  },
-  "exclude": ["__tests__", "node_modules"]
+    "compilerOptions": {
+        "target": "ES2017",
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "lib": [
+            "DOM",
+            "DOM.Iterable",
+            "ESNext"
+        ],
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "./src/*"
+            ],
+            "@audio/*": [
+                "./src/modules/audio/*"
+            ],
+            "@input/*": [
+                "./src/modules/input/*"
+            ],
+            "@config/*": [
+                "./src/modules/config/*"
+            ],
+            "@log/*": [
+                "./src/modules/log/*"
+            ],
+            "@rendering/*": [
+                "./src/modules/renderering/*"
+            ],
+            "@tetris/*": [
+                "./src/modules/tetris/*"
+            ],
+            "@util/*": [
+                "./src/modules/util/*"
+            ]
+        }
+    },
+    "exclude": [
+        "__tests__",
+        "node_modules"
+    ]
 }

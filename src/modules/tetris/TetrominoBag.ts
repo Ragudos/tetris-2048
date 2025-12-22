@@ -2,7 +2,11 @@ import Logger from "@/modules/log/Logger";
 import Point from "@/modules/tetris/common/Point";
 import LinkedList from "@/modules/util/ds/LinkedList";
 import Tetromino from "./Tetromino";
-import { TETROMINO_NAMES, TETROMINO_SHAPES, TetrominoNames } from "./constants";
+import {
+  TETROMINO_NAMES,
+  TETROMINO_SHAPES,
+  type TetrominoNames,
+} from "./constants";
 /**
  *
  * use names to limit object creation,

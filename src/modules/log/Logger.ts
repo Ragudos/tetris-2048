@@ -1,18 +1,18 @@
 export default class Logger {
   private name: string;
   private groupStack: { name: string }[] = [];
-  private colors;
+  private styles;
 
   constructor(name: string) {
     this.name = name;
     this.groupStack = [];
-    this.colors = {
-      INFO: "\x1b[36m", // cyan
-      WARN: "\x1b[33m", // yellow
-      ERROR: "\x1b[31m", // red
-      HEADER: "\x1b[90m", // gray
-      GROUP: "\x1b[90m", // magenta
-      RESET: "\x1b[0m",
+    this.styles = {
+      INFO: "color:#0ea5e9;font-weight:600",
+      WARN: "color:#f59e0b;font-weight:600",
+      ERROR: "color:#ef4444;font-weight:600",
+      HEADER: "color:#6b7280",
+      GROUP: "color:#6b7280;font-weight:600",
+      RESET: "",
     };
   }
 
@@ -38,22 +38,47 @@ export default class Logger {
   }
 
   private header(level: "INFO" | "WARN" | "ERROR") {
-    const levelStr = this.colors[level] + level + this.colors.RESET;
-    const headerStr = `[${this.dateNow()}][${this.name}]`;
-    const headerColored = this.colors.HEADER + headerStr + this.colors.RESET;
-    return `${levelStr} ${headerColored}`;
+    const header = `[${this.dateNow()}][${this.name}]`;
+    return {
+      format: `%c${level}%c ${header}`,
+      styles: [this.styles[level], this.styles.HEADER],
+    };
   }
 
-  private write(level: "INFO" | "WARN" | "ERROR", messages: string[]) {
+  private supportGroup(): boolean {
+    return typeof console.groupCollapsed === "function";
+  }
+
+  private write(
+    level: "INFO" | "WARN" | "ERROR",
+    messages: string[],
+    ignoreDepth = 3
+  ) {
     if (__TEST__) return;
 
-    const head = this.header(level);
+    const logFn = console[level.toLowerCase() as "info" | "warn" | "error"];
+    const useGroup = this.supportGroup();
 
-    messages.forEach((m) => {
-      console.groupCollapsed(head);
-      console[level.toLowerCase() as "info" | "warn" | "error"](m);
-      console.trace();
-      console.groupEnd();
+    messages.forEach((message) => {
+      let stack = new Error().stack;
+      const head = this.header(level);
+
+      if (!stack) {
+        logFn(`${head.format} ${message}`, ...head.styles);
+        return;
+      }
+
+      stack = stack.split("\n").splice(ignoreDepth).join("\n");
+
+      if (useGroup) {
+        console.groupCollapsed(head.format, ...head.styles);
+        logFn(message);
+        logFn(stack);
+        console.groupEnd();
+      } else {
+        logFn(`${head.format} ${message}`, ...head.styles);
+        logFn(stack);
+      }
     });
   }
 
@@ -73,15 +98,24 @@ export default class Logger {
   }
 
   private groupHeader(name: string, message: string) {
-    const headerStr = `[${this.dateNow()}][${this.name}]`;
-    const headerColored = this.colors.HEADER + headerStr + this.colors.RESET;
-    return `${this.colors.GROUP}GROUP ${name}${this.colors.RESET} ${headerColored} - ${message}`;
+    const header = `[${this.dateNow()}][${this.name}]`;
+    return {
+      format: `%cGROUP ${name}%c ${header} — ${message}`,
+      styles: [this.styles.GROUP, this.styles.HEADER],
+    };
   }
 
   group(name: string, message: string) {
     if (__TEST__) return;
 
-    console.group(this.groupHeader(name, message));
+    const h = this.groupHeader(name, message);
+
+    if (!this.supportGroup()) {
+      console.log(h.format, ...h.styles, "\nGROUP {\n");
+    } else {
+      console.group(h.format, ...h.styles);
+    }
+
     this.groupStack.push({ name });
     console.time(name);
   }
@@ -89,7 +123,13 @@ export default class Logger {
   groupCollapsed(name: string, message: string) {
     if (__TEST__) return;
 
-    console.groupCollapsed(this.groupHeader(name, message));
+    const h = this.groupHeader(name, message);
+    if (!this.supportGroup()) {
+      console.log(h.format, ...h.styles, "\nGROUP: {");
+    } else {
+      console.group(h.format, ...h.styles);
+    }
+
     this.groupStack.push({ name });
     console.time(name);
   }
@@ -102,6 +142,11 @@ export default class Logger {
 
       console.timeEnd(group?.name);
     }
-    console.groupEnd();
+
+    if (!this.supportGroup()) {
+      console.log("} END GROUP\n");
+    } else {
+      console.groupEnd();
+    }
   }
 }
