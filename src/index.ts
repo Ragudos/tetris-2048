@@ -16,17 +16,10 @@ async function init(): Promise<void> {
   await Libraries.getPIXI().Assets.load("/spritesheet/data.json");
   logger.groupEnd();
 
-  const game = new Game();
-  const gameContainer = document.getElementById("game-container");
+  const game = new Game({
+    container: document.getElementById("game-container"),
+  });
 
-  if (!gameContainer) {
-    logger.error("Game container doesn't exist");
-
-    return;
-  }
-
-  gameContainer.appendChild(game.getTetrisContainer().getElement());
   await game.initialize();
-
   game.start();
 }

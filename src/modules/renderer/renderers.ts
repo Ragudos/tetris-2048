@@ -322,7 +322,7 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
     const blockSize = GlobalConfig.get().sizes.blockSize;
     const name = state.activeTetromino!.getName();
     const shape = state.activeTetromino!.getShape();
-    const position = state.activeTetromino?.getPosition();
+    const position = state.activeTetromino!.getPosition();
     const spriteType = GlobalConfig.get().gameplay.sprites
       .tetrominoType as keyof typeof SPRITE_NAMES;
     let counter = 0;
@@ -343,8 +343,8 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
         );
 
         sprite.position.set(
-          (x + position!.getX()) * blockSize,
-          (-2 + (y + position!.getY())) * blockSize
+          (x + position.getX()) * blockSize,
+          (-2 + (y + position.getY())) * blockSize
         );
       }
     }
@@ -352,13 +352,11 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
 
   private renderOverflowLayer(state: PlayfieldState): void {}
 
-  private lockAnimTime = 0;
   private isLockingAnimating = false;
   private alpha = 0;
 
   private startLockingAnimation(ticker: Ticker, state: PlayfieldState): void {
     this.isLockingAnimating = true;
-    this.lockAnimTime += ticker.deltaTime;
 
     const shape = state.activeTetromino!.getShape();
     const spriteType = GlobalConfig.get().gameplay.sprites
@@ -391,7 +389,6 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
 
   private cancelLockingAnimation(ticker: Ticker, state: PlayfieldState): void {
     if (this.isLockingAnimating) {
-      this.alpha = 0;
       const shape = state.activeTetromino!.getShape();
       const spriteType = GlobalConfig.get().gameplay.sprites
         .tetrominoType as keyof typeof SPRITE_NAMES;
@@ -412,10 +409,10 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
           applyDarken(sprite.filters[0] as ColorMatrixFilter, 1);
         }
       }
-    }
 
-    this.isLockingAnimating = false;
-    this.lockAnimTime = 0;
+      this.isLockingAnimating = false;
+      this.alpha = 0;
+    }
   }
 
   render(ticker: Ticker, state: PlayfieldState): void {
