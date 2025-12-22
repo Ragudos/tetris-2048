@@ -370,7 +370,7 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
         (GlobalConfig.get().gameplay.lock.delayFrames * (1000 / ticker.FPS))
     );
     this.alpha += fraction;
-    const newAlpha = 1 - this.alpha;
+    const newAlpha = getTimeEaseOut(1 - this.alpha);
 
     if (spriteType === "background") {
       return;
