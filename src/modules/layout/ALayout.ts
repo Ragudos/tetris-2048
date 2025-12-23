@@ -9,7 +9,10 @@ export default abstract class ALayout {
 
   constructor(parent: Container) {
     this.logger = Logger.createLogger(ALayout.name);
-    this.container = new (Libraries.getPIXI().Container)({ parent });
+    this.container = new (Libraries.getPIXI().Container)({
+      parent,
+      label: "Layout",
+    });
     this.dirty = true;
   }
 

@@ -1,4 +1,4 @@
-import type { Application, Ticker } from "pixi.js";
+import type { Application, Container, Ticker } from "pixi.js";
 import { Libraries } from "./Libraries";
 import { GlobalConfig } from "./modules/config/GlobalConfig";
 import Logger from "./modules/log/Logger";
@@ -66,6 +66,10 @@ export default class Game {
       preference: "webgpu",
       resolution: window.devicePixelRatio || 1,
     });
+
+    if (__DEV__) {
+      await (await import("@pixi/devtools")).initDevtools(this.app);
+    }
 
     this.app.canvas.style.visibility = "hidden";
 

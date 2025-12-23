@@ -1,5 +1,4 @@
 import {
-  Color,
   ColorMatrixFilter,
   type Container,
   type Sprite,
@@ -36,7 +35,10 @@ export abstract class GenericRenderer<TState, TContent>
     view: IView<TContent>,
     selector: ISelector<TState>
   ) {
-    this.container = new (Libraries.getPIXI().Container)({ parent });
+    this.container = new (Libraries.getPIXI().Container)({
+      parent,
+      label: "Renderer",
+    });
     this.view = view;
     this.selector = selector;
 
@@ -136,7 +138,7 @@ export class HoldRenderer extends GenericRenderer<HoldState, Sprite> {
 
         (this.view as GenericView<Sprite, HoldState>)
           .getSkin()
-          .applyContentStyle?.(sprite, state);
+          .applyContentStyle?.(ticker, sprite, state);
       }
     }
   }
@@ -167,10 +169,12 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
 
     this.logger = Logger.createLogger(PlayfieldRenderer.name);
 
-    this.backgroundLayer = new PIXI.Container();
-    this.lockedLayer = new PIXI.Container();
-    this.activeLayer = new PIXI.Container();
-    this.ghostLayer = new PIXI.Container();
+    this.backgroundLayer = new PIXI.Container({
+      label: "Tetris Background Grid",
+    });
+    this.lockedLayer = new PIXI.Container({ label: "Tetris Locked Blocks" });
+    this.activeLayer = new PIXI.Container({ label: "Tetris Active Block" });
+    this.ghostLayer = new PIXI.Container({ label: "Tetris Ghost Block" });
     this.overflowLayer = new PIXI.Container();
 
     this.ghostLayer.blendMode = "add";
@@ -300,7 +304,7 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
   private renderGhostLayer(state: PlayfieldState): void {
     const blockSize = GlobalConfig.get().sizes.blockSize;
     let counter = 0;
-    const shape = state.activeTetromino!.getShape();
+    const shape = state.activeTetromino.getShape();
 
     for (let y = 0; y < shape.length; ++y) {
       for (let x = 0; x < shape[y].length; ++x) {
@@ -311,7 +315,7 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
         const sprite = this.ghostLayer.getChildAt(counter++) as Sprite;
 
         sprite.position.set(
-          (x + state.activeTetromino!.getPosition().getX()) * blockSize,
+          (x + state.activeTetromino.getPosition().getX()) * blockSize,
           (-2 + (y + state.ghostY)) * blockSize
         );
       }
@@ -320,9 +324,9 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
 
   private renderActiveLayer(state: PlayfieldState): void {
     const blockSize = GlobalConfig.get().sizes.blockSize;
-    const name = state.activeTetromino!.getName();
-    const shape = state.activeTetromino!.getShape();
-    const position = state.activeTetromino!.getPosition();
+    const name = state.activeTetromino.getName();
+    const shape = state.activeTetromino.getShape();
+    const position = state.activeTetromino.getPosition();
     const spriteType = GlobalConfig.get().gameplay.sprites
       .tetrominoType as keyof typeof SPRITE_NAMES;
     let counter = 0;
@@ -350,7 +354,7 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
     }
   }
 
-  private renderOverflowLayer(state: PlayfieldState): void {}
+  private renderOverflowLayer(_state: PlayfieldState): void {}
 
   private isLockingAnimating = false;
   private alpha = 0;
@@ -358,7 +362,7 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
   private startLockingAnimation(ticker: Ticker, state: PlayfieldState): void {
     this.isLockingAnimating = true;
 
-    const shape = state.activeTetromino!.getShape();
+    const shape = state.activeTetromino.getShape();
     const spriteType = GlobalConfig.get().gameplay.sprites
       .tetrominoType as keyof typeof SPRITE_NAMES;
     let counter = 0;
@@ -387,9 +391,9 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
     }
   }
 
-  private cancelLockingAnimation(ticker: Ticker, state: PlayfieldState): void {
+  private cancelLockingAnimation(_ticker: Ticker, state: PlayfieldState): void {
     if (this.isLockingAnimating) {
-      const shape = state.activeTetromino!.getShape();
+      const shape = state.activeTetromino.getShape();
       const spriteType = GlobalConfig.get().gameplay.sprites
         .tetrominoType as keyof typeof SPRITE_NAMES;
       let counter = 0;
@@ -414,7 +418,6 @@ export class PlayfieldRenderer extends GenericRenderer<PlayfieldState, Sprite> {
       this.alpha = 0;
     }
   }
-
   render(ticker: Ticker, state: PlayfieldState): void {
     if (state.lockedDirty) this.renderLockedLayer(state);
     if (state.ghostDirty) this.renderGhostLayer(state);

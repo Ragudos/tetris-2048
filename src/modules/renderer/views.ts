@@ -9,9 +9,18 @@ export class GenericView<TContent, TState> implements IView<TContent> {
   readonly root: Container;
   readonly contentLayer: Container;
 
-  constructor(skin: ISkin<TContent, TState>, w: number, h: number, labelText?: string) {
-    this.root = new (Libraries.getPIXI().Container)();
-    this.contentLayer = new (Libraries.getPIXI().Container)();
+  constructor(
+    skin: ISkin<TContent, TState>,
+    w: number,
+    h: number,
+    labelText?: string
+  ) {
+    this.root = new (Libraries.getPIXI().Container)({
+      label: "Generic View Root",
+    });
+    this.contentLayer = new (Libraries.getPIXI().Container)({
+      label: "Generic View Content",
+    });
     this.skin = skin;
     const frame = this.skin.createFrame(w, h);
 

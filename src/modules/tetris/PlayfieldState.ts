@@ -1,4 +1,4 @@
-import { TetrominoNames } from "./constants";
+import type { TetrominoNames } from "./constants";
 import type Tetromino from "./Tetromino";
 
 export default class PlayfieldState {
@@ -8,7 +8,7 @@ export default class PlayfieldState {
     readonly activeDirty: boolean,
     readonly ghostDirty: boolean,
     readonly overflowDirty: boolean,
-    readonly activeTetromino: Tetromino | undefined,
+    readonly activeTetromino: Tetromino,
     readonly ghostY: number,
     readonly grid: (TetrominoNames | undefined)[],
     readonly locking: boolean

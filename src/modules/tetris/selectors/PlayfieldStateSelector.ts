@@ -38,6 +38,8 @@ export default class PlayfieldStateSelector
       }
     }
 
+    const actions = gameState.getActiveTetromino().actions;
+
     const state = new PlayfieldState(
       false,
       gameState.getLockedDirty(),

@@ -1,10 +1,11 @@
-import type { Container, Ticker } from "pixi.js";
+import { Container, Graphics, Ticker } from "pixi.js";
 import { Libraries } from "@/Libraries";
 import Logger from "../../modules/log/Logger";
 import type GameState from "../../modules/tetris/GameState";
 import HStack from "../layout/HStack";
 import { HoldRenderer, PlayfieldRenderer } from "./renderers";
 import { PlayfieldBorderSkin, SlantedHoldSkin } from "./skins";
+import { range } from "../util/general";
 
 export class WallShake {
   offsetX = 0;
@@ -65,6 +66,8 @@ export default class GameScene {
   private holdRenderer: HoldRenderer;
   private playfieldRenderer: PlayfieldRenderer;
   private wallShake: WallShake;
+  private playingContainer: Container;
+  private background: Container;
 
   constructor(parent: Container, logicalWidth: number, logicalHeight: number) {
     this.wallShake = new WallShake();
@@ -72,7 +75,21 @@ export default class GameScene {
     this.logicalWidth = logicalWidth;
     this.logicalHeight = logicalHeight;
     this.container = new (Libraries.getPIXI().Container)({ parent });
-    this.layoutContainer = new HStack(this.container, 2, 1, logicalWidth);
+    this.playingContainer = new (Libraries.getPIXI().Container)({
+      parent: this.container,
+      zIndex: 2,
+    });
+    this.background = new (Libraries.getPIXI().Container)({
+      parent: this.container,
+      zIndex: 1,
+      label: "Background",
+    });
+    this.layoutContainer = new HStack(
+      this.playingContainer,
+      2,
+      1,
+      logicalWidth
+    );
     this.holdRenderer = new HoldRenderer(
       this.layoutContainer.getContainer(),
       new SlantedHoldSkin()
@@ -81,6 +98,12 @@ export default class GameScene {
       this.layoutContainer.getContainer(),
       new PlayfieldBorderSkin(0xffffff, 4)
     );
+
+    const bgBounds = new (Libraries.getPIXI().Graphics)({
+      label: "Invisible Rect",
+    });
+
+    this.background.addChild(bgBounds);
   }
 
   initialize(): void {
@@ -89,6 +112,7 @@ export default class GameScene {
     this.playfieldRenderer.initialize();
     this.logger.groupEnd();
   }
+
   render(ticker: Ticker, state: GameState): void {
     const actions = state.getActiveTetromino().actions;
 
@@ -117,6 +141,137 @@ export default class GameScene {
       ticker,
       this.holdRenderer.getSelector().select(state)
     );
+    this.animateBackground(ticker, state);
+  }
+
+  private bgLines: BgLine[] = [];
+
+  private spawnBackgroundLine(): void {
+    const PIXI = Libraries.getPIXI();
+    const gfx = new PIXI.Graphics();
+    this.background.addChild(gfx);
+
+    const horizontal = Math.random() < 0.5;
+    const speed = 0.02 + Math.random() * 0.02;
+
+    let startX: number;
+    let startY: number;
+    let length: number;
+    let dir: number;
+
+    if (horizontal) {
+      // Horizontal line → y is random along the height
+      startY = range(0, this.background.height);
+
+      // Start from left or right edge
+      if (Math.random() < 0.5) {
+        startX = 0; // grow right
+        dir = 1;
+      } else {
+        startX = this.background.width; // grow left
+        dir = -1;
+      }
+
+      length = this.background.width; // always spans full width
+    } else {
+      // Vertical line → x is random along the width
+      startX = range(0, this.background.width);
+
+      // Start from top or bottom edge
+      if (Math.random() < 0.5) {
+        startY = 0; // grow down
+        dir = 1;
+      } else {
+        startY = this.background.height; // grow up
+        dir = -1;
+      }
+
+      length = this.background.height; // always spans full height
+    }
+
+    this.background.addChild(gfx);
+    // Push the new line
+    this.bgLines.push({
+      gfx,
+      horizontal,
+      startX,
+      startY,
+      dir,
+      progress: 0,
+      speed,
+      length,
+      phase: 0,
+    });
+  }
+
+  private animateBackground(ticker: Ticker, state: GameState): void {
+    const actions = state.getActiveTetromino().actions;
+
+    if (actions.hardDrop || actions.collidingRight || actions.collidingLeft) {
+      this.spawnBackgroundLine();
+    }
+
+    const dt = ticker.deltaTime;
+
+    for (let i = this.bgLines.length - 1; i >= 0; i--) {
+      const line = this.bgLines[i];
+      line.progress += line.speed * dt;
+
+      line.gfx.clear();
+
+      if (line.phase === 0) {
+        // Growing phase
+        const t = Math.min(line.progress, 1);
+
+        if (line.horizontal) {
+          line.gfx.moveTo(line.startX, line.startY);
+          line.gfx.lineTo(
+            line.startX + line.dir * line.length * t,
+            line.startY
+          );
+        } else {
+          line.gfx.moveTo(line.startX, line.startY);
+          line.gfx.lineTo(
+            line.startX,
+            line.startY + line.dir * line.length * t
+          );
+        }
+
+        line.gfx.stroke({ width: 2, color: 0xffffff, alpha: 1 });
+
+        if (t >= 1) {
+          // Switch to fade phase
+          line.phase = 1;
+          line.progress = 0; // reset for fade
+        }
+      } else if (line.phase === 1) {
+        // Fade/recede phase
+        const t = Math.min(line.progress, 1); // 0 → 1
+        const fade = 1 - t;
+
+        if (line.horizontal) {
+          line.gfx.moveTo(
+            line.startX + line.dir * line.length * t,
+            line.startY
+          );
+          line.gfx.lineTo(line.startX + line.dir * line.length, line.startY);
+        } else {
+          line.gfx.moveTo(
+            line.startX,
+            line.startY + line.dir * line.length * t
+          );
+          line.gfx.lineTo(line.startX, line.startY + line.dir * line.length);
+        }
+
+        line.gfx.stroke({ width: 2, color: 0xffffff, alpha: fade });
+
+        if (t >= 1) {
+          // Line fully faded → remove
+          line.gfx.destroy();
+          this.bgLines.splice(i, 1);
+        }
+      }
+    }
   }
 
   resize(sw: number, sh: number): void {
@@ -126,10 +281,17 @@ export default class GameScene {
     const scale = Math.min(sw / this.logicalWidth, sh / this.logicalHeight, 1);
     const x = (sw - this.logicalWidth * scale) / 2;
     const y = (sh - this.logicalHeight * scale) / 2;
-    this.logger.info("Acquired(scale, x, y): " + [scale, x, y].toString());
 
-    this.container.scale.set(scale);
-    this.container.position.set(x, y);
+    const bgBounds = this.background.getChildByLabel(
+      "Invisible Rect"
+    ) as Graphics;
+
+    bgBounds.clear();
+    bgBounds.rect(0, 0, sw, sh);
+    bgBounds.fill({ color: 0x000000, alpha: 0 });
+
+    this.playingContainer.scale.set(scale);
+    this.playingContainer.position.set(x, y);
     this.layoutContainer.markDirty();
     this.layoutContainer.tryUpdateLayout();
 
@@ -141,3 +303,15 @@ export default class GameScene {
     this.playfieldRenderer.destroy();
   }
 }
+
+type BgLine = {
+  gfx: Graphics;
+  horizontal: boolean;
+  startX: number;
+  startY: number;
+  dir: number;
+  progress: number; // 0→1
+  speed: number;
+  length: number;
+  phase: 0 | 1; // 0 = grow, 1 = fade
+};

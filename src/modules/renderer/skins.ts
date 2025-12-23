@@ -1,4 +1,4 @@
-import type { Container, Sprite, Text } from "pixi.js";
+import { Container, Graphics, Sprite, Text, Ticker } from "pixi.js";
 import { Libraries } from "@/Libraries";
 import type HoldState from "../../modules/tetris/HoldState";
 import type PlayfieldState from "../../modules/tetris/PlayfieldState";
@@ -10,6 +10,8 @@ export class SlantedHoldSkin implements ISkin<Sprite, HoldState> {
     const g = new (Libraries.getPIXI().Graphics)();
     const SLANT = 15;
 
+    g.rect(0, 0, w, h);
+    g.fill({ color: "black" });
     g.moveTo(w, 0);
     g.lineTo(0, 0);
     g.stroke({ alignment: 1, width: 20, color: 0xffffff });
@@ -34,7 +36,7 @@ export class SlantedHoldSkin implements ISkin<Sprite, HoldState> {
     });
   }
 
-  applyContentStyle(sprite: Sprite, state?: HoldState) {
+  applyContentStyle(ticker: Ticker, sprite: Sprite, state?: HoldState) {
     sprite.alpha = state?.canSwap ? 1 : 0.5;
   }
 }
@@ -42,39 +44,49 @@ export class SlantedHoldSkin implements ISkin<Sprite, HoldState> {
 export class PlayfieldBorderSkin implements ISkin<Sprite, PlayfieldState> {
   private borderColor: number;
   private borderWidth: number;
+  private graphics: Graphics;
 
   constructor(borderColor: number = 0xffffff, borderWidth: number = 2) {
     this.borderColor = borderColor;
     this.borderWidth = borderWidth;
+    this.graphics = new (Libraries.getPIXI().Graphics)();
   }
 
   createFrame(width: number, height: number): Container {
     const PIXI = Libraries.getPIXI();
 
     const container = new PIXI.Container();
-    const graphics = new PIXI.Graphics();
+    const childGraphics = new PIXI.Graphics();
 
+    childGraphics.rect(0, 0, width, height);
+    childGraphics.fill({ color: "black" });
     // Draw left border
-    graphics.moveTo(0, 0);
-    graphics.lineTo(0, height);
+    childGraphics.moveTo(0, 0);
+    childGraphics.lineTo(0, height);
 
     // Draw right border
-    graphics.lineTo(width, height);
+    childGraphics.lineTo(width, height);
 
     // Draw bottom border
-    graphics.lineTo(width, 0);
-    graphics.stroke({
+    childGraphics.lineTo(width, 0);
+    childGraphics.stroke({
       alignment: 0,
       width: this.borderWidth,
       color: this.borderColor,
     });
-    graphics.lineTo(0, 0);
-    graphics.closePath();
+    childGraphics.lineTo(0, 0);
+    childGraphics.closePath();
 
-    container.addChild(graphics);
+    this.graphics.addChild(childGraphics);
+    container.addChild(this.graphics);
 
     return container;
   }
-
-  applyContentStyle(_sprite: Sprite, _state?: PlayfieldState): void {}
+  applyContentStyle(
+    ticker: Ticker,
+    sprite: Sprite,
+    state?: PlayfieldState
+  ): void {
+    if (!state) return;
+  }
 }
