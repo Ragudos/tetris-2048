@@ -14,8 +14,13 @@
  */
 
 import { beforeEach, describe, expect, it } from "vitest";
-import type { DeepPartial } from "@/types/DeepPartial";
-import Config, { type ConfigSchema, GHOST_SKIN, GRAVITY, WALL_KICK } from "./Config";
+import type { DeepPartial } from "@/types";
+import Config, {
+  type ConfigSchema,
+  GHOST_SKIN,
+  GRAVITY,
+  WALL_KICK,
+} from "./Config";
 
 beforeEach(() => {
   localStorage.clear();

@@ -141,9 +141,9 @@ export default class GameScene {
       ticker,
       this.holdRenderer.getSelector().select(state)
     );
-    this.animateBackground(ticker, state);
   }
 
+  /** === BG LINE EFFECT === */
   private bgLines: BgLine[] = [];
 
   private spawnBackgroundLine(): void {
@@ -273,6 +273,8 @@ export default class GameScene {
       }
     }
   }
+
+  /** === BG LINE EFFECT === */
 
   resize(sw: number, sh: number): void {
     this.logger.groupCollapsed("Resize", "Resizing game scene");

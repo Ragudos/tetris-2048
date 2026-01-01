@@ -39,7 +39,7 @@
  * });
  * ```
  */
-import type { DeepPartial } from "@/types/DeepPartial";
+import type { DeepPartial } from "@/types";
 import Config, { type ConfigSchema } from "./Config";
 
 /* -------------------------------- GlobalConfig ------------------------------- */
