@@ -12,6 +12,6 @@ export function getCoordsFrom1D(
   return new Vec2D(index % columns, Math.floor(index / columns));
 }
 
-export function get1DFromCoords(point: Vec2D, columns: number): number {
-  return point.y * columns + point.x;
+export function get1DFromCoords(x: number, y: number, columns: number): number {
+  return y * columns + x;
 }

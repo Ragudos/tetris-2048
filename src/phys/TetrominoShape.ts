@@ -10,14 +10,22 @@ export const ROTATION_DIRECTION = Object.freeze({
 export type RotationDirection =
   (typeof ROTATION_DIRECTION)[keyof typeof ROTATION_DIRECTION];
 
+export type Rotation = 0 | 1 | 2 | 3;
+
+declare const TetrominoShapeBrand: unique symbol;
+
+export type TetrominoShapeValue = readonly (readonly number[])[] & {
+  readonly [TetrominoShapeBrand]: true;
+};
+
 export default class TetrominoShape implements Dirtyable {
   private static logger = Logger.createLogger(TetrominoShape.name);
 
   #value: number[][];
-  #currentRotation: number;
+  #currentRotation: Rotation;
   #dirty: boolean;
 
-  constructor(initValue: number[][], initRotation: number = 0) {
+  constructor(initValue: number[][], initRotation: Rotation = 0) {
     if (!isSquareMatrix(initValue)) {
       TetrominoShape.logger.error(
         "Initial shape value is not a square this.#value."
@@ -70,15 +78,22 @@ export default class TetrominoShape implements Dirtyable {
       }
     }
 
+    this.#currentRotation = ((this.#currentRotation + rotationDirection) %
+      4) as Rotation;
+
+    this.markDirty();
+
     return this.#currentRotation;
   }
 
   get currentRotation(): number {
-    return this.currentRotation;
+    return this.#currentRotation;
   }
 
-  get value(): readonly (readonly number[])[] {
-    return Object.freeze(this.#value.map((row) => Object.freeze([...row])));
+  get value(): TetrominoShapeValue {
+    return Object.freeze(
+      this.#value.map((row) => Object.freeze([...row]))
+    ) as TetrominoShapeValue;
   }
 
   get dirty(): boolean {
