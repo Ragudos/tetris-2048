@@ -1,6 +1,6 @@
 import Game from "./Game";
 import { Libraries } from "./Libraries";
-import Logger from "./modules/log/Logger";
+import Logger from "./lib/log/Logger";
 
 window.addEventListener("DOMContentLoaded", init);
 

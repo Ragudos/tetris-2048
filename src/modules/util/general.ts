@@ -32,6 +32,10 @@ export function getPointFrom1D(
   return new Point(index % columns, Math.floor(index / columns));
 }
 
+export function get1DFromPoint(point: Point, columns: number): number {
+  return point.getY() * columns + point.getX();
+}
+
 export function mergeDefaults<T>(defaults: T, partial?: DeepPartial<T>): T {
   if (!partial) return defaults;
 

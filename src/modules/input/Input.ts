@@ -1,4 +1,4 @@
-import Logger from "@/modules/log/Logger";
+import Logger from "@/lib/log/Logger";
 import { GlobalConfig } from "../config/GlobalConfig";
 import InputMap, { type ActionName } from "./InputMap";
 import InputState from "./InputState";

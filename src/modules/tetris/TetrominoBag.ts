@@ -1,4 +1,4 @@
-import Logger from "@/modules/log/Logger";
+import Logger from "@/lib/log/Logger";
 import Point from "@/modules/tetris/common/Point";
 import LinkedList from "@/modules/util/ds/LinkedList";
 import Tetromino from "./Tetromino";

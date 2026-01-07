@@ -1,6 +1,6 @@
 import type { Container } from "pixi.js";
 import { Libraries } from "@/Libraries";
-import Logger from "../log/Logger";
+import Logger from "../../lib/log/Logger";
 
 export default abstract class ALayout {
   protected logger: Logger;

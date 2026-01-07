@@ -1,7 +1,13 @@
+import type { Rotation, TetrominoNames } from "../modules/tetris/constants";
 import type Vec2D from "../phys/Vec2D";
-import type { TetrominoNames } from "../tetris/constants";
 
 export const TETRIS_EVENT_NAMES = Object.freeze({
+  LOCK: {
+    ANIMATION: {
+      REQUEST_BEGIN: "lock:animation:request_begin",
+    },
+    PLACE: "lock:place",
+  },
   ACTIVE_PIECE: {
     MOVE: "active_piece:move",
     COLLIDE: "active_piece:collide",
@@ -25,15 +31,21 @@ export const TETRIS_EVENT_NAMES = Object.freeze({
 } as const);
 
 interface TetrisEventsMap {
+  [TETRIS_EVENT_NAMES.LOCK.ANIMATION.REQUEST_BEGIN]: {
+    points: Vec2D[];
+  };
+  [TETRIS_EVENT_NAMES.LOCK.PLACE]: {
+    point: Vec2D;
+  };
   [TETRIS_EVENT_NAMES.ACTIVE_PIECE.MOVE]: {
-    previousPoint: Vec2D;
-    newPoint: Vec2D;
+    d: Vec2D;
   };
   [TETRIS_EVENT_NAMES.ACTIVE_PIECE.ROTATE]: {
+    rotationDirection: Rotation;
     newRotation: number;
   };
   [TETRIS_EVENT_NAMES.ACTIVE_PIECE.COLLIDE]: {
-    contactPoints: Vec2D[];
+    contactVec2Ds: Vec2D[];
   };
   [TETRIS_EVENT_NAMES.BAG.HOLD]: {
     heldPiece: TetrominoNames;
@@ -42,7 +54,7 @@ interface TetrisEventsMap {
   [TETRIS_EVENT_NAMES.BAG.NEXT_PIECE]: {
     nextPiece: TetrominoNames;
   };
-  // Game
+  // Game - data to be decided
   [TETRIS_EVENT_NAMES.GAME.START]: unknown;
   [TETRIS_EVENT_NAMES.GAME.OVER]: unknown;
   [TETRIS_EVENT_NAMES.GAME.PAUSE]: unknown;

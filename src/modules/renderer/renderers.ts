@@ -6,7 +6,7 @@ import {
 } from "pixi.js";
 import { Libraries } from "@/Libraries";
 import { GlobalConfig } from "../config/GlobalConfig";
-import Logger from "../log/Logger";
+import Logger from "../../lib/log/Logger";
 import type HoldState from "../tetris/HoldState";
 import type PlayfieldState from "../tetris/PlayfieldState";
 import HoldStateSelector from "../tetris/selectors/HoldStateSelector";

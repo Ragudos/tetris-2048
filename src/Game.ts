@@ -1,7 +1,7 @@
 import type { Application, Container, Ticker } from "pixi.js";
 import { Libraries } from "./Libraries";
 import { GlobalConfig } from "./modules/config/GlobalConfig";
-import Logger from "./modules/log/Logger";
+import Logger from "./lib/log/Logger";
 import GameScene from "./modules/renderer/GameScene";
 import GameState from "./modules/tetris/GameState";
 import { debounce } from "./modules/util/debounce";

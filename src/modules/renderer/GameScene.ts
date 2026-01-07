@@ -1,11 +1,146 @@
-import { Container, Graphics, Ticker } from "pixi.js";
+import { type Container, Graphics, Point, type Ticker } from "pixi.js";
 import { Libraries } from "@/Libraries";
-import Logger from "../../modules/log/Logger";
+import Logger from "../../lib/log/Logger";
 import type GameState from "../../modules/tetris/GameState";
 import HStack from "../layout/HStack";
 import { HoldRenderer, PlayfieldRenderer } from "./renderers";
 import { PlayfieldBorderSkin, SlantedHoldSkin } from "./skins";
-import { range } from "../util/general";
+import { GlobalConfig } from "../config/GlobalConfig";
+
+export type CollisionSide = "left" | "right" | "ground";
+
+interface GrowingCircle {
+  side: CollisionSide;
+  gfx: Graphics;
+  radius: number;
+}
+
+export interface ShapeCollisionSource {
+  shape: number[][]; // [row][col]
+  position: Point; // world-space top-left
+  cellSize: number; // px per cell
+}
+export class CollisionCircleEffect {
+  private circles = new Map<CollisionSide, GrowingCircle>();
+  private previousCollisions = new Set<CollisionSide>();
+
+  constructor(
+    private readonly container: Container,
+    private readonly initialRadius = 2,
+    private readonly maxRadius = 20,
+    private readonly growthRate = 1.6
+  ) {}
+
+  private computeContactPoint(
+    source: ShapeCollisionSource,
+    side: CollisionSide
+  ): Point | null {
+    const { shape, position, cellSize } = source;
+
+    let bestRow = -1;
+    let bestCol = -1;
+
+    for (let row = 0; row < shape.length; row++) {
+      for (let col = 0; col < shape[row].length; col++) {
+        if (!shape[row][col]) continue;
+
+        if (bestRow === -1) {
+          bestRow = row;
+          bestCol = col;
+          continue;
+        }
+
+        switch (side) {
+          case "ground":
+            if (row > bestRow) {
+              bestRow = row;
+              bestCol = col;
+            }
+            break;
+
+          case "left":
+            if (col < bestCol) {
+              bestRow = row;
+              bestCol = col;
+            }
+            break;
+
+          case "right":
+            if (col > bestCol) {
+              bestRow = row;
+              bestCol = col;
+            }
+            break;
+        }
+      }
+    }
+
+    console.log(bestCol, bestRow);
+
+    if (bestRow === -1) return null;
+
+    const worldX = ((position.x + bestCol) * cellSize) / 2;
+    const worldY = ((position.y + bestRow) * cellSize) / 2;
+
+    return new Point(worldX, worldY);
+  }
+
+  handleCollision(
+    source: ShapeCollisionSource,
+    currentCollisions: Set<CollisionSide>
+  ) {
+    for (const side of currentCollisions) {
+      const isNewCollision = !this.previousCollisions.has(side);
+
+      if (!isNewCollision) continue;
+      if (this.circles.has(side)) continue;
+
+      const contact = this.computeContactPoint(source, side);
+      if (!contact) continue;
+
+      const gfx = new Graphics();
+      gfx.position.copyFrom(contact);
+
+      this.container.addChild(gfx);
+
+      this.circles.set(side, {
+        side,
+        gfx,
+        radius: this.initialRadius,
+      });
+    }
+
+    this.previousCollisions = new Set(currentCollisions);
+  }
+
+  resetCollisionState() {
+    this.previousCollisions.clear();
+  }
+
+  update(delta: number) {
+    for (const [side, circle] of this.circles) {
+      circle.radius += this.growthRate * delta;
+
+      circle.gfx.clear();
+      circle.gfx.circle(0, 0, circle.radius);
+      circle.gfx.stroke({ width: 2, color: 0xffffff, alpha: 0.9 });
+
+      if (circle.radius >= this.maxRadius) {
+        this.container.removeChild(circle.gfx);
+        circle.gfx.destroy();
+        this.circles.delete(side);
+      }
+    }
+  }
+
+  clear() {
+    for (const c of this.circles.values()) {
+      this.container.removeChild(c.gfx);
+      c.gfx.destroy();
+    }
+    this.circles.clear();
+  }
+}
 
 export class WallShake {
   offsetX = 0;
@@ -66,6 +201,7 @@ export default class GameScene {
   private holdRenderer: HoldRenderer;
   private playfieldRenderer: PlayfieldRenderer;
   private wallShake: WallShake;
+  private circleEffect: CollisionCircleEffect;
   private playingContainer: Container;
   private background: Container;
 
@@ -99,6 +235,10 @@ export default class GameScene {
       new PlayfieldBorderSkin(0xffffff, 4)
     );
 
+    this.circleEffect = new CollisionCircleEffect(
+      this.playfieldRenderer.getContainer()
+    );
+
     const bgBounds = new (Libraries.getPIXI().Graphics)({
       label: "Invisible Rect",
     });
@@ -118,8 +258,36 @@ export default class GameScene {
 
     if (actions.collidingRight) {
       this.wallShake.addImpulse("x", 2);
-    } else if (actions.collidingLeft) {
+
+      const pos = state.getActiveTetromino().getPosition();
+
+      this.circleEffect.handleCollision(
+        {
+          shape: state.getActiveTetromino().getShape(),
+          position: new Point(pos.getX(), pos.getY()),
+          cellSize: GlobalConfig.get().sizes.blockSize,
+        },
+        new Set(["right"])
+      );
+    } else {
+      this.circleEffect.resetCollisionState();
+    }
+
+    if (actions.collidingLeft) {
       this.wallShake.addImpulse("x", -2);
+
+      const pos = state.getActiveTetromino().getPosition();
+
+      this.circleEffect.handleCollision(
+        {
+          shape: state.getActiveTetromino().getShape(),
+          position: new Point(pos.getX(), pos.getY()),
+          cellSize: GlobalConfig.get().sizes.blockSize,
+        },
+        new Set(["left"])
+      );
+    } else {
+      this.circleEffect.resetCollisionState();
     }
 
     if (actions.hardDrop) {
@@ -131,6 +299,7 @@ export default class GameScene {
     }
 
     this.wallShake.update(ticker.deltaTime);
+    this.circleEffect.update(ticker.deltaTime);
 
     this.wallShake.apply(this.layoutContainer.getContainer());
     this.playfieldRenderer.render(
@@ -141,137 +310,6 @@ export default class GameScene {
       ticker,
       this.holdRenderer.getSelector().select(state)
     );
-  }
-
-  /** === BG LINE EFFECT === */
-  private bgLines: BgLine[] = [];
-
-  private spawnBackgroundLine(): void {
-    const PIXI = Libraries.getPIXI();
-    const gfx = new PIXI.Graphics();
-    this.background.addChild(gfx);
-
-    const horizontal = Math.random() < 0.5;
-    const speed = 0.02 + Math.random() * 0.02;
-
-    let startX: number;
-    let startY: number;
-    let length: number;
-    let dir: number;
-
-    if (horizontal) {
-      // Horizontal line → y is random along the height
-      startY = range(0, this.background.height);
-
-      // Start from left or right edge
-      if (Math.random() < 0.5) {
-        startX = 0; // grow right
-        dir = 1;
-      } else {
-        startX = this.background.width; // grow left
-        dir = -1;
-      }
-
-      length = this.background.width; // always spans full width
-    } else {
-      // Vertical line → x is random along the width
-      startX = range(0, this.background.width);
-
-      // Start from top or bottom edge
-      if (Math.random() < 0.5) {
-        startY = 0; // grow down
-        dir = 1;
-      } else {
-        startY = this.background.height; // grow up
-        dir = -1;
-      }
-
-      length = this.background.height; // always spans full height
-    }
-
-    this.background.addChild(gfx);
-    // Push the new line
-    this.bgLines.push({
-      gfx,
-      horizontal,
-      startX,
-      startY,
-      dir,
-      progress: 0,
-      speed,
-      length,
-      phase: 0,
-    });
-  }
-
-  private animateBackground(ticker: Ticker, state: GameState): void {
-    const actions = state.getActiveTetromino().actions;
-
-    if (actions.hardDrop || actions.collidingRight || actions.collidingLeft) {
-      this.spawnBackgroundLine();
-    }
-
-    const dt = ticker.deltaTime;
-
-    for (let i = this.bgLines.length - 1; i >= 0; i--) {
-      const line = this.bgLines[i];
-      line.progress += line.speed * dt;
-
-      line.gfx.clear();
-
-      if (line.phase === 0) {
-        // Growing phase
-        const t = Math.min(line.progress, 1);
-
-        if (line.horizontal) {
-          line.gfx.moveTo(line.startX, line.startY);
-          line.gfx.lineTo(
-            line.startX + line.dir * line.length * t,
-            line.startY
-          );
-        } else {
-          line.gfx.moveTo(line.startX, line.startY);
-          line.gfx.lineTo(
-            line.startX,
-            line.startY + line.dir * line.length * t
-          );
-        }
-
-        line.gfx.stroke({ width: 2, color: 0xffffff, alpha: 1 });
-
-        if (t >= 1) {
-          // Switch to fade phase
-          line.phase = 1;
-          line.progress = 0; // reset for fade
-        }
-      } else if (line.phase === 1) {
-        // Fade/recede phase
-        const t = Math.min(line.progress, 1); // 0 → 1
-        const fade = 1 - t;
-
-        if (line.horizontal) {
-          line.gfx.moveTo(
-            line.startX + line.dir * line.length * t,
-            line.startY
-          );
-          line.gfx.lineTo(line.startX + line.dir * line.length, line.startY);
-        } else {
-          line.gfx.moveTo(
-            line.startX,
-            line.startY + line.dir * line.length * t
-          );
-          line.gfx.lineTo(line.startX, line.startY + line.dir * line.length);
-        }
-
-        line.gfx.stroke({ width: 2, color: 0xffffff, alpha: fade });
-
-        if (t >= 1) {
-          // Line fully faded → remove
-          line.gfx.destroy();
-          this.bgLines.splice(i, 1);
-        }
-      }
-    }
   }
 
   /** === BG LINE EFFECT === */

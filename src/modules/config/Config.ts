@@ -14,7 +14,7 @@
  */
 
 import z from "zod";
-import Logger from "@log/Logger";
+import Logger from "@/lib/log/Logger";
 import type { DeepPartial } from "@/types";
 import { INPUT_MAP_SCHEMA } from "@input/InputMap";
 import { ControlAction } from "@tetris/ControlAction";

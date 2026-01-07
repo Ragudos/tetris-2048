@@ -1,4 +1,4 @@
-import Logger from "./modules/log/Logger";
+import Logger from "./lib/log/Logger";
 
 /**
  *

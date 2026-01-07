@@ -1,6 +1,6 @@
 import Point from "@/modules/tetris/common/Point";
 import Input from "../input/Input";
-import Logger from "../log/Logger";
+import Logger from "../../lib/log/Logger";
 import { rotateMatrix } from "../util/matrix";
 import { ControlAction } from "./ControlAction";
 import type GameGrid from "./GameGrid";
@@ -121,6 +121,7 @@ export default class Tetromino {
       actionProcessor.down(ControlAction.MOVE_RIGHT) &&
       collidesRight(grid, this.position, this.shape, 1)
     ) {
+      console.log("COLLIDING");
       this.actions.collidingRight = true;
     }
 

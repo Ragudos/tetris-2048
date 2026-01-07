@@ -1,5 +1,5 @@
 import type { Ticker } from "pixi.js";
-import Logger from "@/modules/log/Logger";
+import Logger from "@/lib/log/Logger";
 import type LinkedList from "@/modules/util/ds/LinkedList";
 import { GlobalConfig } from "../config/GlobalConfig";
 import Input from "../input/Input";
